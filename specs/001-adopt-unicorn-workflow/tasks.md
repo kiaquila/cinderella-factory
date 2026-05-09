@@ -17,7 +17,7 @@
 
 - [x] T008 Run `pnpm install`.
 - [x] T009 Run `pnpm run preflight`.
-- [ ] T010 Open PR and trigger Codex review.
+- [x] T010 Open PR and trigger Codex review.
 - [ ] T011 Record GitHub CI/CD outcome.
 
 ## Process Memory
