@@ -1,0 +1,37 @@
+# macOS
+.DS_Store
+._*
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Dependencies and package managers
+node_modules/
+.pnpm-store/
+
+# Build and cache output
+dist/
+build/
+coverage/
+.cache/
+.turbo/
+.next/
+__pycache__/
+*.py[cod]
+
+# Local scratch files
+tmp/
+temp/
+*.tmp
