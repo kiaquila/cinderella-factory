@@ -28,6 +28,9 @@
   not exist until this bootstrap PR merges. Added a first-install fallback that
   mirrors `PR Guard`: use trusted default-branch scripts when present, otherwise
   use PR scripts only for bootstrap.
+- The first workflow-dispatch `AI Review` run could not post marker comments
+  with `GITHUB_TOKEN`. Added a bootstrap-only trusted-human-trigger path so the
+  first PR can still validate a current-head `@codex review` comment.
 
 ### Decisions
 
@@ -44,3 +47,6 @@
   trusted gate scripts exist on `main`.
 - First bootstrap PR also uses PR-local fallback scripts in AI Review until the
   trusted gate scripts exist on `main`.
+- The bootstrap-only human trigger path must not be needed after this PR is
+  merged because `AI Command Policy` will exist on `main` and can record
+  marker-bound review requests normally.

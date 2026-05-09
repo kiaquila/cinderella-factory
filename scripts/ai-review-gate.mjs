@@ -5,6 +5,7 @@ import {
   isAcceptableClaudeComment,
   isAcceptableCodexSummaryComment,
   isAcceptableNativeReview,
+  isTrustedAssociation,
   latestAiReviewRequestMarker,
   latestCodexNativeReviewResult
 } from "./ai-review-helpers.mjs";
@@ -20,6 +21,7 @@ const maxWaitMs = Number(process.env.AI_REVIEW_WAIT_MS || 900000);
 const initialPollMs = Number(process.env.AI_REVIEW_POLL_MS || 15000);
 const maxPollMs = Number(process.env.AI_REVIEW_MAX_POLL_MS || 120000);
 const debounceMs = Number(process.env.AI_REVIEW_DEBOUNCE_MS || 0);
+const bootstrapHumanTrigger = process.env.AI_REVIEW_BOOTSTRAP_HUMAN_TRIGGER === "1";
 const config = readConfig();
 
 if (!token || !repository || !prNumber || !headSha) {
@@ -112,6 +114,33 @@ async function maybePostTriggerComment() {
   }));
 }
 
+async function fetchHeadCommittedAt() {
+  const commit = await request(`/repos/${owner}/${repo}/commits/${headSha}`);
+  return commit?.commit?.committer?.date || null;
+}
+
+function isTrustedHumanReviewTrigger(comment) {
+  if (!isTrustedAssociation(comment?.author_association)) return false;
+  if (comment?.user?.type === "Bot") return false;
+  const body = String(comment?.body || "");
+  if (selectedAgent === "codex") return body.includes("@codex review");
+  if (selectedAgent === "claude") return body.includes("@claude review once");
+  if (selectedAgent === "gemini") return body.includes("/gemini review");
+  return false;
+}
+
+function latestBootstrapHumanTrigger(comments = [], headCommittedAt) {
+  const headTime = Date.parse(headCommittedAt || "");
+  return comments
+    .filter((comment) => {
+      if (!isTrustedHumanReviewTrigger(comment)) return false;
+      const createdAt = Date.parse(comment.created_at || "");
+      return Number.isFinite(createdAt) &&
+        (!Number.isFinite(headTime) || createdAt >= headTime);
+    })
+    .sort((left, right) => Date.parse(right.created_at || "") - Date.parse(left.created_at || ""))[0] || null;
+}
+
 function isAfterRequest(value, requestMarker) {
   const valueTime = Date.parse(value || "");
   const requestedAt = Date.parse(
@@ -134,7 +163,21 @@ async function fetchEvidence() {
   const reviews = await listPaginated(`/repos/${owner}/${repo}/pulls/${prNumber}/reviews`);
   if (selectedAgent === "codex") {
     const comments = await listPaginated(`/repos/${owner}/${repo}/issues/${prNumber}/comments`);
-    const requestMarker = latestAiReviewRequestMarker(comments, selectedAgent, headSha);
+    let requestMarker = latestAiReviewRequestMarker(comments, selectedAgent, headSha);
+    if (!requestMarker && bootstrapHumanTrigger) {
+      const trigger = latestBootstrapHumanTrigger(comments, await fetchHeadCommittedAt());
+      if (trigger) {
+        requestMarker = {
+          agent: selectedAgent,
+          sha: headSha,
+          sourceCommentId: String(trigger.id || ""),
+          sourceCommentCreatedAt: trigger.created_at,
+          requestedAt: trigger.created_at,
+          commentCreatedAt: trigger.created_at,
+          author: trigger.user?.login || null
+        };
+      }
+    }
     if (!requestMarker) return "pending";
 
     const reviewComments = await listPaginated(`/repos/${owner}/${repo}/pulls/${prNumber}/comments`);

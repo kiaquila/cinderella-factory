@@ -95,7 +95,7 @@ jobs:
             node .gate-trusted/scripts/ai-review-gate.mjs
           else
             echo "::warning::Trusted AI review script missing on default branch; using PR script for first-install bootstrap only."
-            node scripts/ai-review-gate.mjs
+            AI_REVIEW_TRIGGER_MODE=skip AI_REVIEW_BOOTSTRAP_HUMAN_TRIGGER=1 node scripts/ai-review-gate.mjs
           fi
         env:
           GITHUB_TOKEN: ${{ github.token }}
