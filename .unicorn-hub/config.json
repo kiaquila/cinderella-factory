@@ -31,7 +31,11 @@
   "defaultImplementationAgent": "claude",
   "defaultReviewAgent": "codex",
   "trustedReviewLogins": [],
-  "trustedReviewLoginsByAgent": {},
+  "trustedReviewLoginsByAgent": {
+    "codex": [
+      "chatgpt-codex-connector"
+    ]
+  },
   "profile": "generic",
   "commands": {
     "preflight": "pnpm run preflight"

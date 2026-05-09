@@ -31,6 +31,10 @@
 - The first workflow-dispatch `AI Review` run could not post marker comments
   with `GITHUB_TOKEN`. Added a bootstrap-only trusted-human-trigger path so the
   first PR can still validate a current-head `@codex review` comment.
+- The first successful Codex native review used login
+  `chatgpt-codex-connector`, while the upstream default trusted login expected
+  `chatgpt-codex-connector[bot]`. Added the actual login to the repository
+  config.
 
 ### Decisions
 
@@ -50,3 +54,5 @@
 - The bootstrap-only human trigger path must not be needed after this PR is
   merged because `AI Command Policy` will exist on `main` and can record
   marker-bound review requests normally.
+- The Codex trusted login override should stay in `.unicorn-hub/config.json`
+  unless GitHub starts reporting the app as `chatgpt-codex-connector[bot]`.
