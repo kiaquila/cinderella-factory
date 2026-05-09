@@ -6,7 +6,8 @@ import { findRepoRoot, parseArgs, pathMatches, readConfig } from "./shared.mjs";
 
 const args = parseArgs();
 const repoRoot = resolve(args.target || findRepoRoot());
-const config = readConfig(repoRoot);
+const configRoot = resolve(args["config-root"] || process.env.UNICORN_HUB_CONFIG_ROOT || repoRoot);
+const config = readConfig(configRoot);
 const positional = args._ || [];
 const inspectWorktree = Boolean(args.worktree);
 const baseRef = positional[0] || "origin/main";

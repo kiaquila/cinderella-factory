@@ -55,7 +55,7 @@ jobs:
       - name: Require complete feature memory
         run: |
           if [ -f .gate-trusted/scripts/check-feature-memory.mjs ]; then
-            node .gate-trusted/scripts/check-feature-memory.mjs "$BASE_REF" "$HEAD_REF"
+            UNICORN_HUB_CONFIG_ROOT=.gate-trusted node .gate-trusted/scripts/check-feature-memory.mjs "$BASE_REF" "$HEAD_REF"
           else
             echo "::warning::Trusted gate script missing on default branch; using PR script for first-install bootstrap only."
             node scripts/check-feature-memory.mjs "$BASE_REF" "$HEAD_REF"
@@ -64,7 +64,7 @@ jobs:
       - name: Validate baseline files
         run: |
           if [ -f .gate-trusted/scripts/check-repo-baseline.mjs ]; then
-            node .gate-trusted/scripts/check-repo-baseline.mjs --target "$GITHUB_WORKSPACE"
+            UNICORN_HUB_CONFIG_ROOT=.gate-trusted node .gate-trusted/scripts/check-repo-baseline.mjs --target "$GITHUB_WORKSPACE"
           else
             echo "::warning::Trusted baseline script missing on default branch; using PR script for first-install bootstrap only."
             node scripts/check-repo-baseline.mjs --target "$GITHUB_WORKSPACE"

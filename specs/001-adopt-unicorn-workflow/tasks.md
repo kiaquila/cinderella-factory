@@ -39,6 +39,10 @@
   requests did not start a new `AI Review` run, and trusted scripts read
   PR-controlled review config. Added the `issue_comment` trigger and made the
   trusted gate read config from `.gate-trusted`.
+- Codex then found the same trust-boundary issue in `PR Guard`: trusted scripts
+  evaluated PR diffs but loaded PR-controlled `productPaths`. Added
+  `UNICORN_HUB_CONFIG_ROOT` support and pointed trusted guard steps at
+  `.gate-trusted`.
 
 ### Decisions
 
@@ -63,3 +67,5 @@
 - Trusted default-branch gate scripts must use default-branch config for
   reviewer allowlists; bootstrap fallback is the only path allowed to use PR
   scripts and PR config.
+- Trusted PR Guard scripts must also use default-branch config while evaluating
+  PR workspace contents.

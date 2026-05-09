@@ -5,7 +5,8 @@ import { findRepoRoot, parseArgs, readConfig } from "./shared.mjs";
 
 const args = parseArgs();
 const root = resolve(args.target || findRepoRoot());
-const config = readConfig(root);
+const configRoot = resolve(args["config-root"] || process.env.UNICORN_HUB_CONFIG_ROOT || root);
+const config = readConfig(configRoot);
 const missing = [];
 
 function requirePath(path) {
