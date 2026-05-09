@@ -35,6 +35,10 @@
   `chatgpt-codex-connector`, while the upstream default trusted login expected
   `chatgpt-codex-connector[bot]`. Added the actual login to the repository
   config.
+- Codex found two P1 issues in the review gate: `issue_comment` review
+  requests did not start a new `AI Review` run, and trusted scripts read
+  PR-controlled review config. Added the `issue_comment` trigger and made the
+  trusted gate read config from `.gate-trusted`.
 
 ### Decisions
 
@@ -56,3 +60,6 @@
   marker-bound review requests normally.
 - The Codex trusted login override should stay in `.unicorn-hub/config.json`
   unless GitHub starts reporting the app as `chatgpt-codex-connector[bot]`.
+- Trusted default-branch gate scripts must use default-branch config for
+  reviewer allowlists; bootstrap fallback is the only path allowed to use PR
+  scripts and PR config.

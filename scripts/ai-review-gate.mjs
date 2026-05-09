@@ -11,6 +11,7 @@ import {
 } from "./ai-review-helpers.mjs";
 import { readConfig } from "./shared.mjs";
 
+const configRoot = process.env.AI_REVIEW_CONFIG_ROOT || undefined;
 const token = process.env.GITHUB_TOKEN;
 const repository = process.env.GITHUB_REPOSITORY;
 const prNumber = process.env.AI_REVIEW_PR_NUMBER;
@@ -22,7 +23,7 @@ const initialPollMs = Number(process.env.AI_REVIEW_POLL_MS || 15000);
 const maxPollMs = Number(process.env.AI_REVIEW_MAX_POLL_MS || 120000);
 const debounceMs = Number(process.env.AI_REVIEW_DEBOUNCE_MS || 0);
 const bootstrapHumanTrigger = process.env.AI_REVIEW_BOOTSTRAP_HUMAN_TRIGGER === "1";
-const config = readConfig();
+const config = readConfig(configRoot);
 
 if (!token || !repository || !prNumber || !headSha) {
   console.error("GITHUB_TOKEN, GITHUB_REPOSITORY, AI_REVIEW_PR_NUMBER, and AI_REVIEW_HEAD_SHA are required.");

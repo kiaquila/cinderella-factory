@@ -3,6 +3,8 @@ name: AI Review
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -19,7 +21,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: ai-review-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
+  group: ai-review-${{ github.event.pull_request.number || github.event.issue.number || inputs.pr_number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -27,6 +29,16 @@ jobs:
     name: AI Review
     if: |
       github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        github.event.comment.user.type != 'Bot' &&
+        (
+          contains(github.event.comment.body, '@codex review') ||
+          contains(github.event.comment.body, '@claude review once') ||
+          contains(github.event.comment.body, '/gemini review')
+        )
+      ) ||
       github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -92,7 +104,7 @@ jobs:
       - name: Route and validate selected native review
         run: |
           if [ -f .gate-trusted/scripts/ai-review-gate.mjs ]; then
-            node .gate-trusted/scripts/ai-review-gate.mjs
+            AI_REVIEW_CONFIG_ROOT=.gate-trusted node .gate-trusted/scripts/ai-review-gate.mjs
           else
             echo "::warning::Trusted AI review script missing on default branch; using PR script for first-install bootstrap only."
             AI_REVIEW_TRIGGER_MODE=skip AI_REVIEW_BOOTSTRAP_HUMAN_TRIGGER=1 node scripts/ai-review-gate.mjs
