@@ -24,7 +24,10 @@
 
 ### Dead Ends
 
-- None yet.
+- The first PR `AI Review` run failed because default-branch trusted scripts do
+  not exist until this bootstrap PR merges. Added a first-install fallback that
+  mirrors `PR Guard`: use trusted default-branch scripts when present, otherwise
+  use PR scripts only for bootstrap.
 
 ### Decisions
 
@@ -38,4 +41,6 @@
 ### Known Issues
 
 - First bootstrap PR uses PR-local fallback scripts in PR Guard until the
+  trusted gate scripts exist on `main`.
+- First bootstrap PR also uses PR-local fallback scripts in AI Review until the
   trusted gate scripts exist on `main`.
