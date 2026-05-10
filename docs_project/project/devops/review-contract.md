@@ -8,7 +8,12 @@ known issues are the source of truth for expected behavior.
 
 Native GitHub PR review. Blocking findings use `P0`, `P1`, or `P2`. Advisory findings use `P3`.
 
-Codex evidence must be tied to the latest PR head. Native reviews must have `commit_id` equal to the current head SHA and must be submitted after the trusted `AI_REVIEW_REQUEST_ID` marker for that head.
+Codex evidence must be tied to the latest PR head. Native reviews must have
+`commit_id` equal to the current head SHA. When a trusted
+`AI_REVIEW_REQUEST_ID` marker exists for an explicit rerun, the native review
+must be submitted after that marker. When no marker exists, such as the
+pull-request-triggered path used by fork PRs, a trusted current-head native
+Codex review is sufficient.
 
 When Codex has no inline findings, a top-level `Codex Review:` summary comment from the trusted Codex bot also satisfies the gate only when it either names the current head SHA in its body or is posted after the trusted marker with no commit or force-push event between the source trigger comment and the summary.
 
@@ -26,4 +31,5 @@ Only `pass` satisfies the gate.
 
 ## Gemini
 
-Native GitHub PR review from the configured app. Critical or high-severity findings block merge.
+Native GitHub PR review from the configured app. Critical or high-severity
+findings in either the review body or inline comments block merge.

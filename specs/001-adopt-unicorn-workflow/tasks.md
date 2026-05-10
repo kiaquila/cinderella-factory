@@ -70,6 +70,9 @@
 - Codex found that Gemini `COMMENTED` reviews with critical/high inline
   comments could pass when the top-level review body was clean. Native review
   evaluation now inspects trusted inline comments for blocking severities.
+- Codex found that the review contract still required markers for all native
+  Codex reviews even though markerless current-head reviews are accepted for
+  pull-request-triggered paths. Updated the contract wording.
 
 ### Decisions
 
@@ -114,3 +117,5 @@
   the workflow ref.
 - Native review state and inline comments are both part of the blocking signal;
   summary-only checks are not enough for Gemini-style reviews.
+- The review contract must distinguish explicit rerun marker requirements from
+  markerless pull-request-triggered native reviews.
