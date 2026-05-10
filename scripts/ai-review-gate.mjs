@@ -203,7 +203,8 @@ async function fetchEvidence() {
     return summaryAccepted ? "pass" : "pending";
   }
 
-  const latestNativeResult = latestNativeReviewResult(reviews, selectedAgent, headSha, config);
+  const reviewComments = await listPaginated(`/repos/${owner}/${repo}/pulls/${prNumber}/comments`);
+  const latestNativeResult = latestNativeReviewResult(reviews, reviewComments, selectedAgent, headSha, config);
   if (latestNativeResult === "pass") return "pass";
   if (latestNativeResult === "fail") return "fail";
 

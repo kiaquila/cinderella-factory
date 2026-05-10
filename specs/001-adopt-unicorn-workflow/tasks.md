@@ -67,6 +67,9 @@
   workflow ref, letting PR-controlled workflow definitions run with workflow
   permissions. Dispatch now targets the trusted default branch and passes the PR
   head SHA as input; dispatched runs publish a PR-head `AI Review` check.
+- Codex found that Gemini `COMMENTED` reviews with critical/high inline
+  comments could pass when the top-level review body was clean. Native review
+  evaluation now inspects trusted inline comments for blocking severities.
 
 ### Decisions
 
@@ -109,3 +112,5 @@
 - Workflow dispatch must run trusted default-branch workflow definitions. PR
   identity travels through explicit inputs and a PR-head check run, not through
   the workflow ref.
+- Native review state and inline comments are both part of the blocking signal;
+  summary-only checks are not enough for Gemini-style reviews.

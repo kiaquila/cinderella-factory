@@ -198,7 +198,7 @@ export function latestCodexNativeReviewResult(reviews = [], reviewComments = [],
     )[0]?.result || null;
 }
 
-export function classifyNativeReview(review, agent, headSha, config = {}) {
+export function classifyNativeReview(review, reviewComments = [], agent, headSha, config = {}) {
   if (!review) return null;
   if (review.commit_id && headSha && review.commit_id !== headSha) return null;
   const login = normalizeLogin(review.user?.login);
@@ -206,6 +206,11 @@ export function classifyNativeReview(review, agent, headSha, config = {}) {
 
   if (!isTrustedReviewLogin(login, agent, config)) return null;
   if (containsBlockingSeverity(body, agent)) return "fail";
+  const commentsForReview = reviewComments.filter((comment) =>
+    comment.pull_request_review_id === review.id &&
+    isTrustedReviewLogin(comment.user?.login, agent, config)
+  );
+  if (commentsForReview.some((comment) => containsBlockingSeverity(comment.body, agent))) return "fail";
   if (review.state === "CHANGES_REQUESTED") return "fail";
   if (review.state === "APPROVED") return "pass";
   if (agent === "gemini" && review.state === "COMMENTED") return "pass";
@@ -213,11 +218,11 @@ export function classifyNativeReview(review, agent, headSha, config = {}) {
   return null;
 }
 
-export function latestNativeReviewResult(reviews = [], agent, headSha, config = {}) {
+export function latestNativeReviewResult(reviews = [], reviewComments = [], agent, headSha, config = {}) {
   return reviews
     .map((review) => ({
       review,
-      result: classifyNativeReview(review, agent, headSha, config)
+      result: classifyNativeReview(review, reviewComments, agent, headSha, config)
     }))
     .filter((entry) => entry.result !== null)
     .sort((left, right) =>
@@ -226,7 +231,7 @@ export function latestNativeReviewResult(reviews = [], agent, headSha, config = 
 }
 
 export function isAcceptableNativeReview(review, agent, headSha, config = {}) {
-  return classifyNativeReview(review, agent, headSha, config) === "pass";
+  return classifyNativeReview(review, [], agent, headSha, config) === "pass";
 }
 
 export function isAcceptableClaudeComment(comment, headSha, config = {}) {
