@@ -85,6 +85,7 @@ if (lines.length) {
 if (isReview) {
   const pull = await request(`/repos/${owner}/${repo}/pulls/${prNumber}`);
   const headSha = pull.head?.sha;
+  const headRef = pull.head?.ref;
   const sourceCommentId = String(event.comment.id);
   const requestedAt = event.comment.created_at || new Date().toISOString();
   const requestId = `${sourceCommentId}-${String(headSha).slice(0, 12)}`;
@@ -97,6 +98,20 @@ if (isReview) {
     sourceCommentCreatedAt: event.comment.created_at,
     requestedAt
   }));
+
+  if (headRef) {
+    await request(`/repos/${owner}/${repo}/actions/workflows/ai-review.yml/dispatches`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        ref: headRef,
+        inputs: {
+          pr_number: String(prNumber),
+          trigger_mode: "skip"
+        }
+      })
+    });
+  }
 }
 
 console.log(`Trusted AI ${isReview ? "review" : "implementation"} command for ${selected}.`);

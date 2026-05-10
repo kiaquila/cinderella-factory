@@ -46,6 +46,10 @@
 - Codex found an `issue_comment` condition bug in `AI Review`: the trailing
   `github.event.pull_request.draft == false` could run on ordinary comments.
   Restricted that branch of the condition to `pull_request` events.
+- Codex found that `issue_comment` AI Review runs are attached to default branch,
+  not PR head. Removed `issue_comment` from `AI Review` and made
+  `AI Command Policy` dispatch `AI Review` on the PR head after recording the
+  trusted marker.
 
 ### Decisions
 
@@ -74,3 +78,6 @@
   PR workspace contents.
 - `issue_comment` should only start AI Review for explicit review trigger
   commands on PRs; ordinary comments must not create required check noise.
+- Comment-triggered review validation must create a PR-head check, so dispatch
+  belongs in `AI Command Policy` rather than as a direct `issue_comment`
+  trigger on `AI Review`.

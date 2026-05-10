@@ -15,7 +15,9 @@ AI_REVIEW_AGENT=codex
 ```
 
 PRs are merge-ready only when all checks are green, blocking findings are
-resolved, docs/specs are updated, and no conflicts remain.
+resolved, docs/specs are updated, and no conflicts remain. Trusted
+`@codex review` comments are validated by `AI Command Policy`, which records the
+current PR head marker and dispatches `AI Review` on the PR head branch.
 
 Branch protection should be applied after this workflow is merged to `main`:
 
