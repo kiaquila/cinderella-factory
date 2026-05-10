@@ -43,6 +43,9 @@
   evaluated PR diffs but loaded PR-controlled `productPaths`. Added
   `UNICORN_HUB_CONFIG_ROOT` support and pointed trusted guard steps at
   `.gate-trusted`.
+- Codex found an `issue_comment` condition bug in `AI Review`: the trailing
+  `github.event.pull_request.draft == false` could run on ordinary comments.
+  Restricted that branch of the condition to `pull_request` events.
 
 ### Decisions
 
@@ -69,3 +72,5 @@
   scripts and PR config.
 - Trusted PR Guard scripts must also use default-branch config while evaluating
   PR workspace contents.
+- `issue_comment` should only start AI Review for explicit review trigger
+  commands on PRs; ordinary comments must not create required check noise.
