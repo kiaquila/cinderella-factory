@@ -33,7 +33,8 @@
   "trustedReviewLogins": [],
   "trustedReviewLoginsByAgent": {
     "codex": [
-      "chatgpt-codex-connector[bot]"
+      "chatgpt-codex-connector[bot]",
+      "chatgpt-codex-connector"
     ]
   },
   "profile": "generic",
