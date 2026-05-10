@@ -87,6 +87,12 @@ if (isReview) {
   const headSha = pull.head?.sha;
   const headRef = pull.head?.ref;
   const headRepository = pull.head?.repo?.full_name;
+  const workflowRef = event.repository?.default_branch || pull.base?.repo?.default_branch || pull.base?.ref || "main";
+  if (!headSha) {
+    await createComment("AI review command rejected: could not resolve the current PR head SHA.");
+    console.error(`AI review command rejected: missing head SHA for PR #${prNumber}.`);
+    process.exit(1);
+  }
   if (headRepository && headRepository !== repository) {
     await createComment("AI review command rejected: comment-triggered review dispatch is supported only for branches in this repository. Fork PRs must rely on pull-request-triggered AI Review or a maintainer branch.");
     console.error(`AI review command rejected: cannot dispatch workflow for fork head ${headRepository}:${headRef}.`);
@@ -105,20 +111,19 @@ if (isReview) {
     requestedAt
   }));
 
-  if (headRef) {
-    await request(`/repos/${owner}/${repo}/actions/workflows/ai-review.yml/dispatches`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        ref: headRef,
-        inputs: {
-          pr_number: String(prNumber),
-          review_agent: selected,
-          trigger_mode: "skip"
-        }
-      })
-    });
-  }
+  await request(`/repos/${owner}/${repo}/actions/workflows/ai-review.yml/dispatches`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      ref: workflowRef,
+      inputs: {
+        pr_number: String(prNumber),
+        head_sha: headSha,
+        review_agent: selected,
+        trigger_mode: "skip"
+      }
+    })
+  });
 }
 
 console.log(`Trusted AI ${isReview ? "review" : "implementation"} command for ${selected}.`);

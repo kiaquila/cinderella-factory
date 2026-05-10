@@ -8,6 +8,9 @@ on:
       pr_number:
         description: Pull request number to validate
         required: true
+      head_sha:
+        description: Pull request head SHA to validate
+        required: false
       trigger_mode:
         description: Review trigger mode; use skip unless a backend explicitly supports automation
         required: false
@@ -17,6 +20,7 @@ on:
         required: false
 
 permissions:
+  checks: write
   contents: read
   pull-requests: read
   issues: write
@@ -40,7 +44,7 @@ jobs:
       - name: Checkout PR content
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ inputs.head_sha || github.event.pull_request.head.sha || github.sha }}
 
       - name: Checkout trusted gate scripts
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -61,6 +65,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           AI_REVIEW_PR_NUMBER: ${{ inputs.pr_number }}
+          AI_REVIEW_HEAD_SHA: ${{ inputs.head_sha }}
 
       - name: Resolve selected review policy
         id: policy
@@ -97,13 +102,38 @@ jobs:
           echo "trigger_mode=$trigger_mode" >> "$GITHUB_OUTPUT"
 
       - name: Route and validate selected native review
+        shell: bash
         run: |
+          set +e
           if [ -f .gate-trusted/scripts/ai-review-gate.mjs ]; then
             AI_REVIEW_CONFIG_ROOT=.gate-trusted node .gate-trusted/scripts/ai-review-gate.mjs
           else
             echo "::warning::Trusted AI review script missing on default branch; using PR script for first-install bootstrap only."
             AI_REVIEW_TRIGGER_MODE=skip AI_REVIEW_BOOTSTRAP_HUMAN_TRIGGER=1 node scripts/ai-review-gate.mjs
           fi
+          status=$?
+
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            conclusion="success"
+            summary="AI Review gate passed for ${AI_REVIEW_HEAD_SHA}."
+            if [ "$status" -ne 0 ]; then
+              conclusion="failure"
+              summary="AI Review gate failed for ${AI_REVIEW_HEAD_SHA}."
+            fi
+
+            if [ -f .gate-trusted/scripts/publish-ai-review-check.mjs ]; then
+              AI_REVIEW_CHECK_STATUS=completed AI_REVIEW_CHECK_CONCLUSION="$conclusion" AI_REVIEW_CHECK_OUTPUT_SUMMARY="$summary" node .gate-trusted/scripts/publish-ai-review-check.mjs
+            else
+              echo "::warning::Trusted AI review check publisher missing on default branch; using PR script for first-install bootstrap only."
+              AI_REVIEW_CHECK_STATUS=completed AI_REVIEW_CHECK_CONCLUSION="$conclusion" AI_REVIEW_CHECK_OUTPUT_SUMMARY="$summary" node scripts/publish-ai-review-check.mjs
+            fi
+            publisher_status=$?
+            if [ "$publisher_status" -ne 0 ]; then
+              status="$publisher_status"
+            fi
+          fi
+
+          exit "$status"
         env:
           GITHUB_TOKEN: ${{ github.token }}
           AI_REVIEW_AGENT: ${{ steps.policy.outputs.selected_agent }}

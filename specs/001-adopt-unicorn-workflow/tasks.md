@@ -63,6 +63,10 @@
 - Codex found that Gemini `CHANGES_REQUESTED` reviews could be treated as
   acceptable when the body omitted `critical`/`high`. Native review evaluation
   now fails on `CHANGES_REQUESTED` and blocking severities before passing.
+- Codex found that comment-triggered dispatch used the PR branch as the
+  workflow ref, letting PR-controlled workflow definitions run with workflow
+  permissions. Dispatch now targets the trusted default branch and passes the PR
+  head SHA as input; dispatched runs publish a PR-head `AI Review` check.
 
 ### Decisions
 
@@ -102,3 +106,6 @@
   markers remain required for summary/comment evidence and for explicit reruns.
 - Native review backends must respect GitHub review state; `CHANGES_REQUESTED`
   is always blocking even if text severity keywords are absent.
+- Workflow dispatch must run trusted default-branch workflow definitions. PR
+  identity travels through explicit inputs and a PR-head check run, not through
+  the workflow ref.

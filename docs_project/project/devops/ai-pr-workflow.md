@@ -17,10 +17,12 @@ AI_REVIEW_AGENT=codex
 PRs are merge-ready only when all checks are green, blocking findings are
 resolved, docs/specs are updated, and no conflicts remain. Trusted
 review comments such as `@codex review` are validated by `AI Command Policy`,
-which records the current PR head marker and dispatches `AI Review` on the PR
-head branch with the requested review agent. Comment-triggered dispatch is
-supported for branches in this repository; fork PRs must use the
-pull-request-triggered AI Review path or be moved to a maintainer branch.
+which records the current PR head marker and dispatches the trusted default
+branch `AI Review` workflow with the PR number, head SHA, and requested review
+agent. Comment-triggered dispatch is supported for branches in this repository;
+fork PRs must use the pull-request-triggered AI Review path or be moved to a
+maintainer branch. Dispatched runs publish a PR-head `AI Review` check so branch
+protection is satisfied without running PR-controlled workflow definitions.
 Current-head native Codex reviews can satisfy the gate without a request marker;
 summary-only evidence still requires a trusted marker.
 For native review backends, `CHANGES_REQUESTED` and configured blocking

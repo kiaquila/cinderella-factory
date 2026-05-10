@@ -4,6 +4,7 @@ import { readFileSync, appendFileSync } from "node:fs";
 const token = process.env.GITHUB_TOKEN;
 const repository = process.env.GITHUB_REPOSITORY;
 const explicitPrNumber = process.env.AI_REVIEW_PR_NUMBER;
+const explicitHeadSha = process.env.AI_REVIEW_HEAD_SHA;
 
 if (!token || !repository) {
   console.error("GITHUB_TOKEN and GITHUB_REPOSITORY are required.");
@@ -44,9 +45,12 @@ if (!prNumber) {
 }
 
 const pull = await request(`/repos/${owner}/${repo}/pulls/${prNumber}`);
+if (explicitHeadSha && explicitHeadSha !== pull.head.sha) {
+  console.warn(`AI Review requested head ${explicitHeadSha}, but PR #${prNumber} is now at ${pull.head.sha}; stale gate will be skipped.`);
+}
 const output = {
   pr_number: String(pull.number),
-  head_sha: pull.head.sha,
+  head_sha: explicitHeadSha || pull.head.sha,
   base_ref: pull.base.ref,
   head_ref: pull.head.ref
 };
