@@ -50,6 +50,9 @@
   not PR head. Removed `issue_comment` from `AI Review` and made
   `AI Command Policy` dispatch `AI Review` on the PR head after recording the
   trusted marker.
+- Codex found that dispatched review runs did not preserve requested backend
+  (`/gemini`, `@claude`, `@codex`). Added a `review_agent` workflow input and
+  pass the selected backend from `AI Command Policy`.
 
 ### Decisions
 
@@ -81,3 +84,5 @@
 - Comment-triggered review validation must create a PR-head check, so dispatch
   belongs in `AI Command Policy` rather than as a direct `issue_comment`
   trigger on `AI Review`.
+- Review backend selection must travel with the trusted dispatch; do not infer
+  every comment-triggered run from the repository default variable.

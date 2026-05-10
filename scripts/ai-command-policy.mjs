@@ -107,6 +107,7 @@ if (isReview) {
         ref: headRef,
         inputs: {
           pr_number: String(prNumber),
+          review_agent: selected,
           trigger_mode: "skip"
         }
       })

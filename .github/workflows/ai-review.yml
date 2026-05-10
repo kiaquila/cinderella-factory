@@ -12,6 +12,9 @@ on:
         description: Review trigger mode; use skip unless a backend explicitly supports automation
         required: false
         default: skip
+      review_agent:
+        description: Review agent to validate; defaults to repository AI_REVIEW_AGENT
+        required: false
 
 permissions:
   contents: read
@@ -64,11 +67,12 @@ jobs:
         shell: bash
         env:
           SELECTED_AGENT: ${{ vars.AI_REVIEW_AGENT }}
+          REQUESTED_AGENT: ${{ inputs.review_agent }}
           REQUESTED_TRIGGER_MODE: ${{ inputs.trigger_mode }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          selected="${SELECTED_AGENT:-codex}"
+          selected="${REQUESTED_AGENT:-${SELECTED_AGENT:-codex}}"
           selected="${selected:-codex}"
           case "$selected" in
             codex|claude|gemini) ;;
