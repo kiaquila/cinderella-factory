@@ -179,13 +179,16 @@ async function fetchEvidence() {
         };
       }
     }
-    if (!requestMarker) return "pending";
 
     const reviewComments = await listPaginated(`/repos/${owner}/${repo}/pulls/${prNumber}/comments`);
-    const reviewsAfterRequest = reviews.filter((review) => isAfterRequest(review.submitted_at, requestMarker));
-    const latestCodexResult = latestCodexNativeReviewResult(reviewsAfterRequest, reviewComments, headSha, config);
+    const reviewCandidates = requestMarker
+      ? reviews.filter((review) => isAfterRequest(review.submitted_at, requestMarker))
+      : reviews;
+    const latestCodexResult = latestCodexNativeReviewResult(reviewCandidates, reviewComments, headSha, config);
     if (latestCodexResult === "pass") return "pass";
     if (latestCodexResult === "fail") return "fail";
+
+    if (!requestMarker) return "pending";
 
     const timeline = await listPaginated(`/repos/${owner}/${repo}/issues/${prNumber}/timeline`);
     const triggerAt = requestMarker.sourceCommentCreatedAt || requestMarker.requestedAt || requestMarker.commentCreatedAt;

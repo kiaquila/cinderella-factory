@@ -21,6 +21,8 @@ which records the current PR head marker and dispatches `AI Review` on the PR
 head branch with the requested review agent. Comment-triggered dispatch is
 supported for branches in this repository; fork PRs must use the
 pull-request-triggered AI Review path or be moved to a maintainer branch.
+Current-head native Codex reviews can satisfy the gate without a request marker;
+summary-only evidence still requires a trusted marker.
 
 Branch protection should be applied after this workflow is merged to `main`:
 

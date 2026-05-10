@@ -56,6 +56,10 @@
 - Codex found that comment-triggered dispatch could record a marker for fork PRs
   and then fail because the fork branch is not a base-repository ref. Added an
   explicit fork rejection before marker creation.
+- Codex found that fork PRs could not pass through the pull-request-triggered
+  Codex path because native reviews were only considered after a request marker.
+  Native current-head Codex reviews now count without a marker; summary evidence
+  still needs a trusted marker.
 
 ### Decisions
 
@@ -91,3 +95,5 @@
   every comment-triggered run from the repository default variable.
 - Comment-triggered dispatch only supports branches in the base repository;
   fork PRs need pull-request-triggered review or a maintainer branch.
+- Native Codex reviews are strong current-head evidence on their own. Request
+  markers remain required for summary/comment evidence and for explicit reruns.
