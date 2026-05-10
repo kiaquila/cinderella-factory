@@ -150,7 +150,7 @@ export function isAcceptableCodexSummaryComment(comment, headSha, requestMarker 
     ""
   );
   const createdAt = Date.parse(comment?.created_at || "");
-  return Number.isFinite(requestedAt) && Number.isFinite(createdAt) && createdAt >= requestedAt;
+  return Number.isFinite(requestedAt) && Number.isFinite(createdAt) && createdAt > requestedAt;
 }
 
 export function hasHeadUpdateBetweenTimestamps(timeline = [], startCreatedAt, endCreatedAt) {

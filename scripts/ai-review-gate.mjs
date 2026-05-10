@@ -224,14 +224,22 @@ if (!await waitForQuietHead()) {
 const started = Date.now();
 let outcome = "pending";
 let lastError = null;
+let consecutiveErrors = 0;
+const maxConsecutiveErrors = 5;
 let pollMs = initialPollMs;
 
 while (Date.now() - started <= maxWaitMs) {
   try {
     outcome = await fetchEvidence();
+    consecutiveErrors = 0;
     if (outcome !== "pending") break;
   } catch (error) {
     lastError = error;
+    consecutiveErrors += 1;
+    if (consecutiveErrors >= maxConsecutiveErrors) {
+      console.error(`AI Review gate aborting after ${maxConsecutiveErrors} consecutive API errors. Last: ${error.message}`);
+      break;
+    }
   }
   const elapsed = Date.now() - started;
   const remaining = maxWaitMs - elapsed;
@@ -252,7 +260,7 @@ if (outcome === "pass") {
 
 const detail = lastError ? ` Last API error: ${lastError.message}` : "";
 const reviewHint = selectedAgent === "claude"
-  ? "Claude must post AI_REVIEW_OUTCOME: pass for the current head SHA."
+  ? `Claude outcome for this head: ${outcome === "fail" ? "block or advisory" : "none"}. Only AI_REVIEW_OUTCOME: pass satisfies the gate.`
   : selectedAgent === "codex"
     ? "Codex must provide current-head review evidence after a trusted AI review request marker."
     : `${selectedAgent} must provide an acceptable native review for the current head SHA.`;
