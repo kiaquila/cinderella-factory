@@ -2,10 +2,10 @@
 import {
   createAiReviewRequestMarkerBody,
   hasHeadUpdateBetweenTimestamps,
-  isAcceptableClaudeComment,
   isAcceptableCodexSummaryComment,
   isTrustedAssociation,
   latestAiReviewRequestMarker,
+  latestClaudeOutcome,
   latestCodexNativeReviewResult,
   latestNativeReviewResult
 } from "./ai-review-helpers.mjs";
@@ -158,7 +158,10 @@ async function fetchEvidence() {
 
   if (selectedAgent === "claude") {
     const comments = await listPaginated(`/repos/${owner}/${repo}/issues/${prNumber}/comments`);
-    return comments.some((comment) => isAcceptableClaudeComment(comment, headSha, config)) ? "pass" : "pending";
+    const latestOutcome = latestClaudeOutcome(comments, headSha, config);
+    if (latestOutcome === "pass") return "pass";
+    if (latestOutcome) return "fail";
+    return "pending";
   }
 
   const reviews = await listPaginated(`/repos/${owner}/${repo}/pulls/${prNumber}/reviews`);

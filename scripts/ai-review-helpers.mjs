@@ -241,3 +241,21 @@ export function isAcceptableClaudeComment(comment, headSha, config = {}) {
   if (extractMarkerSha(body) !== headSha) return false;
   return extractClaudeOutcome(body) === "pass";
 }
+
+export function latestClaudeOutcome(comments = [], headSha, config = {}) {
+  return comments
+    .map((comment) => {
+      const body = comment?.body || "";
+      const login = normalizeLogin(comment?.user?.login);
+      const outcome = extractClaudeOutcome(body);
+      if (!isTrustedReviewLogin(login, "claude", config)) return null;
+      if (extractMarkerSha(body) !== headSha) return null;
+      if (!outcome) return null;
+      return {
+        outcome,
+        createdAt: comment.created_at || ""
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0]?.outcome || null;
+}

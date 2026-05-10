@@ -73,6 +73,9 @@
 - Codex found that the review contract still required markers for all native
   Codex reviews even though markerless current-head reviews are accepted for
   pull-request-triggered paths. Updated the contract wording.
+- Codex found that any older Claude `pass` could override a later
+  `advisory`/`block` on the same head. The gate now evaluates the latest trusted
+  Claude outcome for the head SHA.
 
 ### Decisions
 
@@ -119,3 +122,5 @@
   summary-only checks are not enough for Gemini-style reviews.
 - The review contract must distinguish explicit rerun marker requirements from
   markerless pull-request-triggered native reviews.
+- For comment-based review backends, later trusted outcomes supersede earlier
+  ones for the same head SHA.

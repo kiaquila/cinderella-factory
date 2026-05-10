@@ -27,7 +27,8 @@ AI_REVIEW_SHA: <head-sha>
 AI_REVIEW_OUTCOME: pass|advisory|block
 ```
 
-Only `pass` satisfies the gate.
+Only the latest trusted Claude outcome for the current head counts. `pass`
+satisfies the gate; `advisory` and `block` keep it red.
 
 ## Gemini
 
