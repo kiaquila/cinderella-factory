@@ -86,6 +86,12 @@ if (isReview) {
   const pull = await request(`/repos/${owner}/${repo}/pulls/${prNumber}`);
   const headSha = pull.head?.sha;
   const headRef = pull.head?.ref;
+  const headRepository = pull.head?.repo?.full_name;
+  if (headRepository && headRepository !== repository) {
+    await createComment("AI review command rejected: comment-triggered review dispatch is supported only for branches in this repository. Fork PRs must rely on pull-request-triggered AI Review or a maintainer branch.");
+    console.error(`AI review command rejected: cannot dispatch workflow for fork head ${headRepository}:${headRef}.`);
+    process.exit(1);
+  }
   const sourceCommentId = String(event.comment.id);
   const requestedAt = event.comment.created_at || new Date().toISOString();
   const requestId = `${sourceCommentId}-${String(headSha).slice(0, 12)}`;

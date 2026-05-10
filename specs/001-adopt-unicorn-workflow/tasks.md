@@ -53,6 +53,9 @@
 - Codex found that dispatched review runs did not preserve requested backend
   (`/gemini`, `@claude`, `@codex`). Added a `review_agent` workflow input and
   pass the selected backend from `AI Command Policy`.
+- Codex found that comment-triggered dispatch could record a marker for fork PRs
+  and then fail because the fork branch is not a base-repository ref. Added an
+  explicit fork rejection before marker creation.
 
 ### Decisions
 
@@ -86,3 +89,5 @@
   trigger on `AI Review`.
 - Review backend selection must travel with the trusted dispatch; do not infer
   every comment-triggered run from the repository default variable.
+- Comment-triggered dispatch only supports branches in the base repository;
+  fork PRs need pull-request-triggered review or a maintainer branch.
