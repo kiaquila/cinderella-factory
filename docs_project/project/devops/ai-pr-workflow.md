@@ -23,6 +23,8 @@ supported for branches in this repository; fork PRs must use the
 pull-request-triggered AI Review path or be moved to a maintainer branch.
 Current-head native Codex reviews can satisfy the gate without a request marker;
 summary-only evidence still requires a trusted marker.
+For native review backends, `CHANGES_REQUESTED` and configured blocking
+severities keep the gate red.
 
 Branch protection should be applied after this workflow is merged to `main`:
 

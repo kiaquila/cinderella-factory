@@ -4,10 +4,10 @@ import {
   hasHeadUpdateBetweenTimestamps,
   isAcceptableClaudeComment,
   isAcceptableCodexSummaryComment,
-  isAcceptableNativeReview,
   isTrustedAssociation,
   latestAiReviewRequestMarker,
-  latestCodexNativeReviewResult
+  latestCodexNativeReviewResult,
+  latestNativeReviewResult
 } from "./ai-review-helpers.mjs";
 import { readConfig } from "./shared.mjs";
 
@@ -203,9 +203,9 @@ async function fetchEvidence() {
     return summaryAccepted ? "pass" : "pending";
   }
 
-  if (reviews.some((review) => isAcceptableNativeReview(review, selectedAgent, headSha, config))) {
-    return "pass";
-  }
+  const latestNativeResult = latestNativeReviewResult(reviews, selectedAgent, headSha, config);
+  if (latestNativeResult === "pass") return "pass";
+  if (latestNativeResult === "fail") return "fail";
 
   return "pending";
 }

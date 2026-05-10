@@ -198,23 +198,35 @@ export function latestCodexNativeReviewResult(reviews = [], reviewComments = [],
     )[0]?.result || null;
 }
 
-export function isAcceptableNativeReview(review, agent, headSha, config = {}) {
-  if (!review) return false;
-  if (review.commit_id && headSha && review.commit_id !== headSha) return false;
+export function classifyNativeReview(review, agent, headSha, config = {}) {
+  if (!review) return null;
+  if (review.commit_id && headSha && review.commit_id !== headSha) return null;
   const login = normalizeLogin(review.user?.login);
   const body = review.body || "";
 
-  if (agent === "codex") {
-    return isTrustedReviewLogin(login, agent, config) &&
-      review.state === "APPROVED" &&
-      !containsBlockingSeverity(body, agent);
-  }
+  if (!isTrustedReviewLogin(login, agent, config)) return null;
+  if (containsBlockingSeverity(body, agent)) return "fail";
+  if (review.state === "CHANGES_REQUESTED") return "fail";
+  if (review.state === "APPROVED") return "pass";
+  if (agent === "gemini" && review.state === "COMMENTED") return "pass";
 
-  if (agent === "gemini") {
-    return isTrustedReviewLogin(login, agent, config) && !containsBlockingSeverity(body, agent);
-  }
+  return null;
+}
 
-  return false;
+export function latestNativeReviewResult(reviews = [], agent, headSha, config = {}) {
+  return reviews
+    .map((review) => ({
+      review,
+      result: classifyNativeReview(review, agent, headSha, config)
+    }))
+    .filter((entry) => entry.result !== null)
+    .sort((left, right) =>
+      Date.parse(right.review.submitted_at || "") - Date.parse(left.review.submitted_at || "")
+    )[0]?.result || null;
+}
+
+export function isAcceptableNativeReview(review, agent, headSha, config = {}) {
+  return classifyNativeReview(review, agent, headSha, config) === "pass";
 }
 
 export function isAcceptableClaudeComment(comment, headSha, config = {}) {

@@ -60,6 +60,9 @@
   Codex path because native reviews were only considered after a request marker.
   Native current-head Codex reviews now count without a marker; summary evidence
   still needs a trusted marker.
+- Codex found that Gemini `CHANGES_REQUESTED` reviews could be treated as
+  acceptable when the body omitted `critical`/`high`. Native review evaluation
+  now fails on `CHANGES_REQUESTED` and blocking severities before passing.
 
 ### Decisions
 
@@ -97,3 +100,5 @@
   fork PRs need pull-request-triggered review or a maintainer branch.
 - Native Codex reviews are strong current-head evidence on their own. Request
   markers remain required for summary/comment evidence and for explicit reruns.
+- Native review backends must respect GitHub review state; `CHANGES_REQUESTED`
+  is always blocking even if text severity keywords are absent.
