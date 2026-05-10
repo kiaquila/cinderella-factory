@@ -32,8 +32,8 @@ Rationale:
 V1 includes exactly three specialist agents:
 
 - `mila`: relationship support agent, focused on woman-man relationships; tone is warm, supportive, friend-like, but with clear anti-manipulation and safety boundaries.
-- `flea-market-sales`: practical sales helper for marketplace/baraholka listings, pricing, negotiation messages, and listing cleanup.
-- `pediatric-consultant`: educational pediatric triage/support agent, not a doctor, with strict red-flag and medical-safety rules.
+- `salesman`: practical sales helper for marketplace/baraholka listings, pricing, negotiation messages, and listing cleanup.
+- `pediatrician`: educational pediatric triage/support agent, not a doctor, with strict red-flag and medical-safety rules.
 
 V1 also includes:
 - one orchestrator,
@@ -113,12 +113,12 @@ cinderella-factory/
       knowledge.md
       safety.md
       examples.md
-    flea-market-sales/
+    salesman/
       agent.md
       knowledge.md
       templates.md
       examples.md
-    pediatric-consultant/
+    pediatrician/
       agent.md
       safety.md
       red-flags.md
@@ -147,7 +147,7 @@ cinderella-factory/
       chapter-summaries.md
       glossary.md
       practices.md
-    pediatric/
+    pediatrician/
       source-register.md
       common-scenarios.md
     sales/
@@ -158,8 +158,8 @@ cinderella-factory/
       stable-preferences.md
     agents/
       mila/summary.md
-      flea-market-sales/summary.md
-      pediatric-consultant/summary.md
+      salesman/summary.md
+      pediatrician/summary.md
     sessions/
       README.md
 
@@ -171,8 +171,8 @@ cinderella-factory/
   evals/
     routing.jsonl
     mila.jsonl
-    flea-market-sales.jsonl
-    pediatric-consultant.jsonl
+    salesman.jsonl
+    pediatrician.jsonl
     privacy.jsonl
 ```
 
@@ -260,8 +260,8 @@ Default rule: do not save personal facts automatically. A memory write should pa
 
 Cross-agent memory rules:
 - Mila can read only `shared`, `context/core`, `context/domains/relationships`, `knowledge/mila`, and `memory/agents/mila`.
-- Sales can read sales memory and shared style/preferences, but not relationship or pediatric session details.
-- Pediatric consultant can read pediatric knowledge and explicitly provided child-health context, but not general relationship/sales memory.
+- Salesman can read sales memory and shared style/preferences, but not relationship or pediatric session details.
+- Pediatrician can read pediatric knowledge and explicitly provided child-health context, but not general relationship/sales memory.
 - Shared memory should stay small and boring: stable preferences, preferred tone, language, formatting.
 
 ## MemPalace Decision
@@ -284,7 +284,7 @@ Why not central in V1:
 
 Recommended setup later:
 - one factory-scoped MemPalace, not one unbounded "all Codex forever" memory,
-- wings such as `cinderella-factory`, `mila`, `sales`, `pediatric`,
+- wings such as `cinderella-factory`, `mila`, `salesman`, `pediatrician`,
 - rooms such as `source`, `session-summary`, `user-preference`, `safety`,
 - no auto-mining of all Codex sessions by default,
 - opt-in mining of selected archived sessions, starting with the Mila relationship-agent session.
@@ -354,7 +354,7 @@ Response style:
 - asks clarifying questions when facts are missing,
 - separates "what happened", "what you feel", "what you want", "what protects your dignity".
 
-### Flea Market Sales Agent
+### Salesman
 
 Purpose: help sell items on marketplace/baraholka platforms.
 
@@ -380,7 +380,7 @@ Likely skills:
 - `price-positioning`,
 - `buyer-reply`.
 
-### Pediatric Consultant
+### Pediatrician
 
 Purpose: educational pediatric guidance and triage support.
 
@@ -485,10 +485,10 @@ Acceptance:
 Create:
 - `agents/mila/agent.md`
 - `agents/mila/safety.md`
-- `agents/flea-market-sales/agent.md`
-- `agents/pediatric-consultant/agent.md`
-- `agents/pediatric-consultant/safety.md`
-- `agents/pediatric-consultant/red-flags.md`
+- `agents/salesman/agent.md`
+- `agents/pediatrician/agent.md`
+- `agents/pediatrician/safety.md`
+- `agents/pediatrician/red-flags.md`
 
 Acceptance:
 - each agent has mission, persona, boundaries, memory scopes, source policy, response shape, and examples.
@@ -541,8 +541,8 @@ Acceptance:
 Create initial eval files:
 - `evals/routing.jsonl`
 - `evals/mila.jsonl`
-- `evals/flea-market-sales.jsonl`
-- `evals/pediatric-consultant.jsonl`
+- `evals/salesman.jsonl`
+- `evals/pediatrician.jsonl`
 - `evals/privacy.jsonl`
 
 Acceptance:
@@ -568,7 +568,7 @@ Acceptance:
 ## Open Questions For User
 
 1. Should Mila address the user as a close friend by default, or switch between friend/coach modes?
-2. Should pediatric consultant know a stable child profile, or should it ask for age/context every time unless explicitly saved?
+2. Should pediatrician know a stable child profile, or should it ask for age/context every time unless explicitly saved?
 3. Which marketplace/baraholka platforms matter first?
 4. Should memory writes require explicit "save this" at first, or can the memory-curation skill propose saves at the end of sessions?
 5. Is the relationship book available as `fb2`, `epub`, or another format?

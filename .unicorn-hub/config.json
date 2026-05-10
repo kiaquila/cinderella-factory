@@ -1,0 +1,45 @@
+{
+  "docsDir": "docs_project",
+  "specsDir": "specs",
+  "productPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    ".github/",
+    ".specify/",
+    ".unicorn-hub/",
+    "orchestrator/",
+    "agents/",
+    "skills/",
+    "context/",
+    "knowledge/",
+    "memory/",
+    "templates/",
+    "evals/",
+    "scripts/",
+    "docs/",
+    "docs_project/",
+    "package.json",
+    "pnpm-workspace.yaml"
+  ],
+  "requiredChecks": [
+    "baseline-checks",
+    "guard",
+    "AI Review"
+  ],
+  "defaultBaseBranch": "main",
+  "defaultImplementationAgent": "claude",
+  "defaultReviewAgent": "codex",
+  "trustedReviewLogins": [],
+  "trustedReviewLoginsByAgent": {
+    "codex": [
+      "chatgpt-codex-connector[bot]",
+      "chatgpt-codex-connector"
+    ]
+  },
+  "profile": "generic",
+  "commands": {
+    "preflight": "pnpm run preflight"
+  },
+  "excludeTemplates": []
+}

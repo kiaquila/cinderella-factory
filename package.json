@@ -1,0 +1,21 @@
+{
+  "name": "cinderella-factory",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10.16"
+  },
+  "scripts": {
+    "check:feature-memory": "node scripts/check-feature-memory.mjs origin/main HEAD",
+    "check:feature-memory:worktree": "node scripts/check-feature-memory.mjs --worktree",
+    "check:repo": "node scripts/check-repo-baseline.mjs",
+    "check:syntax": "for file in scripts/*.mjs; do node --check \"$file\"; done",
+    "preflight": "pnpm run check:repo && pnpm run check:feature-memory && pnpm run check:feature-memory:worktree && pnpm run check:syntax",
+    "agent:set": "node scripts/set-implementation-agent.mjs",
+    "worktree:new": "node scripts/new-worktree.mjs",
+    "pr:publish": "node scripts/publish-branch.mjs",
+    "review:switch": "node scripts/switch-review-agent.mjs"
+  }
+}
