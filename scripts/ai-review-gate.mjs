@@ -146,7 +146,7 @@ function latestBootstrapHumanTrigger(comments = [], pullRequestHeadUpdatedAt, ti
       if (!isTrustedHumanReviewTrigger(comment)) return false;
       const createdAt = Date.parse(comment.created_at || "");
       return Number.isFinite(createdAt) &&
-        (!Number.isFinite(requiredAfter) || createdAt >= requiredAfter);
+        (!Number.isFinite(requiredAfter) || createdAt > requiredAfter);
     })
     .sort((left, right) => Date.parse(right.created_at || "") - Date.parse(left.created_at || ""))[0] || null;
 }

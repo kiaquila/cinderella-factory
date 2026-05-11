@@ -135,6 +135,9 @@
   stale summaries cannot satisfy a newer push.
 - Treat Actions-authored marker comments as optional when GitHub rejects them;
   the trusted dispatch path is the durable signal in that environment.
+- Use strict greater-than (not greater-or-equal) when comparing trusted human
+  trigger timestamps against the PR head update lower bound to prevent
+  same-second reuse of a pre-existing review request.
 
 ### Known Issues
 
