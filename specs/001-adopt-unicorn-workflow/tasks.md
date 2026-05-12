@@ -117,6 +117,14 @@
 - Codex found that `AI Command Policy` still aborted before dispatch when
   Actions-authored marker comments were blocked. Marker-comment creation is now
   best-effort; trusted dispatch still runs with `head_updated_at`.
+- Codex found that `ai-command-policy.mjs` plumbed `pull.updated_at` from the
+  Pulls API into the dispatch input, but that timestamp is fetched after the
+  triggering `@codex review` comment, so it includes comment activity. Combined
+  with strict `>`, the only valid fallback marker was always rejected and the
+  AI Review gate could not pass through the comment-dispatch flow. Removed the
+  tainted source and the dispatch input; the gate now derives the lower bound
+  only from the trusted webhook `pull_request.updated_at` and force-push
+  timeline events.
 
 ### Decisions
 
@@ -138,6 +146,10 @@
 - Use strict greater-than (not greater-or-equal) when comparing trusted human
   trigger timestamps against the PR head update lower bound to prevent
   same-second reuse of a pre-existing review request.
+- Source the trusted-human-trigger lower bound only from server-assigned,
+  comment-untainted signals: `github.event.pull_request.updated_at` from the
+  webhook payload and `head_ref_force_pushed` timeline events. Reject the
+  Pulls API `pull.updated_at` because GitHub bumps it on comment activity.
 
 ### Known Issues
 

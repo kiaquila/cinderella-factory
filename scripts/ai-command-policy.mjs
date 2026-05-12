@@ -112,7 +112,7 @@ if (isReview) {
       requestedAt
     }));
   } catch (error) {
-    console.warn(`Could not create AI review request marker comment; continuing with trusted dispatch fallback. ${error.message}`);
+    console.warn(`::warning::Could not create AI review request marker comment; continuing with trusted dispatch. ${error.message}`);
   }
 
   await request(`/repos/${owner}/${repo}/actions/workflows/ai-review.yml/dispatches`, {
@@ -123,7 +123,6 @@ if (isReview) {
       inputs: {
         pr_number: String(prNumber),
         head_sha: headSha,
-        head_updated_at: pull.updated_at || event.comment.created_at || "",
         review_agent: selected,
         trigger_mode: "skip"
       }

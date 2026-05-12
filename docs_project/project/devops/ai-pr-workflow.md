@@ -19,10 +19,12 @@ access so gate workflows can publish checks and dispatch trusted validation.
 If GitHub refuses Actions-authored marker comments with `403 Resource not
 accessible by integration`, `AI Review` accepts a trusted human `@codex review`
 comment on the current head as the request marker, but only when that request
-is newer than the `pull_request.updated_at` timestamp from the Actions event
-or dispatch input, plus any later force-push event recorded in the PR timeline.
-Marker-comment creation is best-effort in that environment; trusted dispatch
-still runs and carries the head timestamp.
+is strictly newer than every server-assigned lower bound: the
+`pull_request.updated_at` timestamp from the Actions webhook payload and any
+`head_ref_force_pushed` timeline event. The gate does not consult the Pulls
+API `updated_at` field because GitHub bumps it on comment activity, which
+taints the comparison. Marker-comment creation is best-effort; the trusted
+dispatch path still runs.
 
 PRs are merge-ready only when all checks are green, blocking findings are
 resolved, docs/specs are updated, and no conflicts remain. Trusted

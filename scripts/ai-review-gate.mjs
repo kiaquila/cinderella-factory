@@ -140,13 +140,12 @@ function latestBootstrapHumanTrigger(comments = [], pullRequestHeadUpdatedAt, ti
     latestHeadRefForcePushTime(timeline)
   ].filter(Number.isFinite);
   if (lowerBounds.length === 0) return null;
-  const requiredAfter = lowerBounds.length ? Math.max(...lowerBounds) : NaN;
+  const requiredAfter = Math.max(...lowerBounds);
   return comments
     .filter((comment) => {
       if (!isTrustedHumanReviewTrigger(comment)) return false;
       const createdAt = Date.parse(comment.created_at || "");
-      return Number.isFinite(createdAt) &&
-        (!Number.isFinite(requiredAfter) || createdAt > requiredAfter);
+      return Number.isFinite(createdAt) && createdAt > requiredAfter;
     })
     .sort((left, right) => Date.parse(right.created_at || "") - Date.parse(left.created_at || ""))[0] || null;
 }

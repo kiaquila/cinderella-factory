@@ -5,7 +5,6 @@ const token = process.env.GITHUB_TOKEN;
 const repository = process.env.GITHUB_REPOSITORY;
 const explicitPrNumber = process.env.AI_REVIEW_PR_NUMBER;
 const explicitHeadSha = process.env.AI_REVIEW_HEAD_SHA;
-const explicitHeadUpdatedAt = process.env.AI_REVIEW_HEAD_UPDATED_AT;
 
 if (!token || !repository) {
   console.error("GITHUB_TOKEN and GITHUB_REPOSITORY are required.");
@@ -52,7 +51,6 @@ if (explicitHeadSha && explicitHeadSha !== pull.head.sha) {
 const output = {
   pr_number: String(pull.number),
   head_sha: explicitHeadSha || pull.head.sha,
-  head_updated_at: explicitHeadUpdatedAt || event?.pull_request?.updated_at || pull.updated_at || "",
   base_ref: pull.base.ref,
   head_ref: pull.head.ref
 };
