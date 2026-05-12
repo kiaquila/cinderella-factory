@@ -162,7 +162,7 @@ async function main() {
   const repository = process.env.GITHUB_REPOSITORY;
   const eventPath = process.env.GITHUB_EVENT_PATH;
   const selectedAgent = normalizeAgent(process.env.AI_REVIEW_AGENT);
-  const config = readConfig();
+  const config = readConfig(process.env.AI_REVIEW_CONFIG_ROOT || process.env.UNICORN_HUB_CONFIG_ROOT || undefined);
 
   if (!token || !repository || !eventPath) {
     console.error("GITHUB_TOKEN, GITHUB_REPOSITORY, and GITHUB_EVENT_PATH are required.");

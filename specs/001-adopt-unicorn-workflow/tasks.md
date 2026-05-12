@@ -144,6 +144,10 @@
   bootstrap import. Imported the rerun workflow, helper, and focused tests
   without replacing Cinderella Factory's default-branch dispatch flow or the
   current-head review gate hardening added during PR #2.
+- The first PR run of `AI Review Rerun` failed because the workflow checked out
+  trusted default-branch scripts before the new rerun script existed on `main`.
+  Mirrored the existing bootstrap pattern: prefer trusted default-branch rerun
+  scripts, otherwise use the PR-local script only for first-install bootstrap.
 
 ### Decisions
 
@@ -176,6 +180,9 @@
   action-required pull-request-triggered `AI Review` runs after trusted bot
   evidence appears. Comment-triggered trusted dispatch continues to publish its
   PR-head check through the existing workflow-dispatch path.
+- Trusted `AI Review Rerun` scripts must read trusted default-branch config via
+  `AI_REVIEW_CONFIG_ROOT`; PR-local config is allowed only in the bootstrap
+  fallback before the script exists on `main`.
 
 ### Known Issues
 

@@ -29,13 +29,26 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout PR content
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
       - name: Checkout trusted rerun scripts
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.event.repository.default_branch }}
+          path: .rerun-trusted
+          fetch-depth: 1
 
       - name: Rerun AI Review for trusted evidence
-        run: node scripts/ai-review-rerun.mjs
+        run: |
+          if [ -f .rerun-trusted/scripts/ai-review-rerun.mjs ]; then
+            AI_REVIEW_CONFIG_ROOT=.rerun-trusted node .rerun-trusted/scripts/ai-review-rerun.mjs
+          else
+            echo "::warning::Trusted AI review rerun script missing on default branch; using PR script for first-install bootstrap only."
+            node scripts/ai-review-rerun.mjs
+          fi
         env:
           GITHUB_TOKEN: ${{ github.token }}
           AI_REVIEW_AGENT: ${{ vars.AI_REVIEW_AGENT }}
