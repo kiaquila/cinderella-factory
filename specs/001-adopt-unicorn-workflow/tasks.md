@@ -25,9 +25,9 @@
 - [x] T012 Grant `pull-requests: write` to trusted AI review workflows so
   Actions-authored PR marker comments can use the PR comment permission family,
   not only `issues: write`.
-- [ ] T013 Import missing event-driven Unicorn Hub AI Review rerun pipeline
+- [x] T013 Import missing event-driven Unicorn Hub AI Review rerun pipeline
   pieces without reverting Cinderella Factory's head-bound gate hardening.
-- [ ] T014 Add local verification for the imported rerun helpers and syntax
+- [x] T014 Add local verification for the imported rerun helpers and syntax
   checks.
 - [ ] T015 Open follow-up PR and trigger Codex review.
 
@@ -140,6 +140,10 @@
   marker comments even when `GITHUB_TOKEN` had `issues: write`. The follow-up
   root-cause attempt grants `pull-requests: write` to the trusted comment and
   gate workflows so comments on pull requests can use the PR permission family.
+- Unicorn Hub added an event-driven `AI Review Rerun` workflow after the
+  bootstrap import. Imported the rerun workflow, helper, and focused tests
+  without replacing Cinderella Factory's default-branch dispatch flow or the
+  current-head review gate hardening added during PR #2.
 
 ### Decisions
 
@@ -168,6 +172,10 @@
 - Keep the bootstrap human-trigger fallback until a real follow-up PR proves
   that Actions-authored marker comments can be posted again with the narrowed
   workflow permission change.
+- Use `AI Review Rerun` only to rerun failed, cancelled, timed-out, or
+  action-required pull-request-triggered `AI Review` runs after trusted bot
+  evidence appears. Comment-triggered trusted dispatch continues to publish its
+  PR-head check through the existing workflow-dispatch path.
 
 ### Known Issues
 

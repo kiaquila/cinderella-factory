@@ -43,6 +43,9 @@ Current-head native Codex reviews can satisfy the gate without a request marker;
 summary-only evidence still requires a trusted marker.
 For native review backends, `CHANGES_REQUESTED` and configured blocking
 severities in either review summaries or inline comments keep the gate red.
+When trusted bot review evidence arrives after a pull-request-triggered
+`AI Review` run already failed or timed out, `AI Review Rerun` reruns the
+current-head pull request run instead of requiring another human command.
 
 Branch protection should be applied after this workflow is merged to `main`:
 
