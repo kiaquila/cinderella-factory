@@ -23,6 +23,7 @@ const initialPollMs = Number(process.env.AI_REVIEW_POLL_MS || 15000);
 const maxPollMs = Number(process.env.AI_REVIEW_MAX_POLL_MS || 120000);
 const debounceMs = Number(process.env.AI_REVIEW_DEBOUNCE_MS || 0);
 const bootstrapHumanTrigger = process.env.AI_REVIEW_BOOTSTRAP_HUMAN_TRIGGER === "1";
+const headUpdatedAt = process.env.AI_REVIEW_HEAD_UPDATED_AT || "";
 const config = readConfig(configRoot);
 
 if (!token || !repository || !prNumber || !headSha) {
@@ -115,11 +116,6 @@ async function maybePostTriggerComment() {
   }));
 }
 
-async function fetchHeadCommittedAt() {
-  const commit = await request(`/repos/${owner}/${repo}/commits/${headSha}`);
-  return commit?.commit?.committer?.date || null;
-}
-
 function isTrustedHumanReviewTrigger(comment) {
   if (!isTrustedAssociation(comment?.author_association)) return false;
   if (comment?.user?.type === "Bot") return false;
@@ -130,14 +126,26 @@ function isTrustedHumanReviewTrigger(comment) {
   return false;
 }
 
-function latestBootstrapHumanTrigger(comments = [], headCommittedAt) {
-  const headTime = Date.parse(headCommittedAt || "");
+function latestHeadRefForcePushTime(timeline = []) {
+  const times = timeline
+    .filter((event) => event.event === "head_ref_force_pushed")
+    .map((event) => Date.parse(event.created_at || ""))
+    .filter(Number.isFinite);
+  return times.length ? Math.max(...times) : NaN;
+}
+
+function latestBootstrapHumanTrigger(comments = [], pullRequestHeadUpdatedAt, timeline = []) {
+  const lowerBounds = [
+    Date.parse(pullRequestHeadUpdatedAt || ""),
+    latestHeadRefForcePushTime(timeline)
+  ].filter(Number.isFinite);
+  if (lowerBounds.length === 0) return null;
+  const requiredAfter = Math.max(...lowerBounds);
   return comments
     .filter((comment) => {
       if (!isTrustedHumanReviewTrigger(comment)) return false;
       const createdAt = Date.parse(comment.created_at || "");
-      return Number.isFinite(createdAt) &&
-        (!Number.isFinite(headTime) || createdAt >= headTime);
+      return Number.isFinite(createdAt) && createdAt > requiredAfter;
     })
     .sort((left, right) => Date.parse(right.created_at || "") - Date.parse(left.created_at || ""))[0] || null;
 }
@@ -168,8 +176,10 @@ async function fetchEvidence() {
   if (selectedAgent === "codex") {
     const comments = await listPaginated(`/repos/${owner}/${repo}/issues/${prNumber}/comments`);
     let requestMarker = latestAiReviewRequestMarker(comments, selectedAgent, headSha);
+    let timeline = null;
     if (!requestMarker && bootstrapHumanTrigger) {
-      const trigger = latestBootstrapHumanTrigger(comments, await fetchHeadCommittedAt());
+      timeline = await listPaginated(`/repos/${owner}/${repo}/issues/${prNumber}/timeline`);
+      const trigger = latestBootstrapHumanTrigger(comments, headUpdatedAt, timeline);
       if (trigger) {
         requestMarker = {
           agent: selectedAgent,
@@ -193,7 +203,7 @@ async function fetchEvidence() {
 
     if (!requestMarker) return "pending";
 
-    const timeline = await listPaginated(`/repos/${owner}/${repo}/issues/${prNumber}/timeline`);
+    timeline ||= await listPaginated(`/repos/${owner}/${repo}/issues/${prNumber}/timeline`);
     const triggerAt = requestMarker.sourceCommentCreatedAt || requestMarker.requestedAt || requestMarker.commentCreatedAt;
     const summaryAccepted = comments.some((comment) => {
       if (!isAcceptableCodexSummaryComment(comment, headSha, requestMarker, config)) return false;

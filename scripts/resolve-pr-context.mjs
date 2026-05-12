@@ -13,12 +13,11 @@ if (!token || !repository) {
 
 const [owner, repo] = repository.split("/");
 
-function eventPrNumber() {
+function eventPayload() {
   const eventPath = process.env.GITHUB_EVENT_PATH;
   if (!eventPath) return null;
   try {
-    const event = JSON.parse(readFileSync(eventPath, "utf8"));
-    return event.pull_request?.number || event.issue?.number || null;
+    return JSON.parse(readFileSync(eventPath, "utf8"));
   } catch {
     return null;
   }
@@ -38,7 +37,8 @@ async function request(path) {
   return response.json();
 }
 
-const prNumber = explicitPrNumber || eventPrNumber();
+const event = eventPayload();
+const prNumber = explicitPrNumber || event?.pull_request?.number || event?.issue?.number || null;
 if (!prNumber) {
   console.error("Could not resolve pull request number.");
   process.exit(1);

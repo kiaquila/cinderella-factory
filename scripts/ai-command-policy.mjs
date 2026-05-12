@@ -102,14 +102,18 @@ if (isReview) {
   const requestedAt = event.comment.created_at || new Date().toISOString();
   const requestId = `${sourceCommentId}-${String(headSha).slice(0, 12)}`;
 
-  await createComment(createAiReviewRequestMarkerBody({
-    agent: selected,
-    headSha,
-    requestId,
-    sourceCommentId,
-    sourceCommentCreatedAt: event.comment.created_at,
-    requestedAt
-  }));
+  try {
+    await createComment(createAiReviewRequestMarkerBody({
+      agent: selected,
+      headSha,
+      requestId,
+      sourceCommentId,
+      sourceCommentCreatedAt: event.comment.created_at,
+      requestedAt
+    }));
+  } catch (error) {
+    console.warn(`::warning::Could not create AI review request marker comment; continuing with trusted dispatch. ${error.message}`);
+  }
 
   await request(`/repos/${owner}/${repo}/actions/workflows/ai-review.yml/dispatches`, {
     method: "POST",
