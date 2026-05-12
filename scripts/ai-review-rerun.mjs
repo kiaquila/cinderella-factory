@@ -47,18 +47,12 @@ export function selectAiReviewRun(runs = [], headSha) {
     return { action: "already_running", run: activeRun };
   }
 
-  const rerunnableRun = matchingRuns.find((run) =>
-    run.status === "completed" && rerunnableConclusions.has(run.conclusion)
-  );
-  if (rerunnableRun) {
-    return { action: "rerun", run: rerunnableRun };
+  const latestCompletedRun = matchingRuns.find((run) => run.status === "completed");
+  if (latestCompletedRun?.conclusion === "success") {
+    return { action: "already_success", run: latestCompletedRun };
   }
-
-  const successfulRun = matchingRuns.find((run) =>
-    run.status === "completed" && run.conclusion === "success"
-  );
-  if (successfulRun) {
-    return { action: "already_success", run: successfulRun };
+  if (latestCompletedRun && rerunnableConclusions.has(latestCompletedRun.conclusion)) {
+    return { action: "rerun", run: latestCompletedRun };
   }
 
   return { action: "not_found", run: null };

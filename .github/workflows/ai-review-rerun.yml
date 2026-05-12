@@ -15,13 +15,9 @@ jobs:
   ai-review-rerun:
     name: ai-review-rerun
     if: |
-      (
-        github.event_name == 'pull_request_review' &&
-        github.event.review.user.type == 'Bot'
-      ) ||
+      github.event_name == 'pull_request_review' ||
       (
         github.event.issue.pull_request &&
-        github.event.comment.user.type == 'Bot' &&
         (
           startsWith(github.event.comment.body, 'Codex Review:') ||
           contains(github.event.comment.body, 'AI_REVIEW_OUTCOME:')
@@ -30,9 +26,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR content
+        if: ${{ github.event_name == 'pull_request_review' }}
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Checkout trusted rerun scripts
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -45,9 +42,11 @@ jobs:
         run: |
           if [ -f .rerun-trusted/scripts/ai-review-rerun.mjs ]; then
             AI_REVIEW_CONFIG_ROOT=.rerun-trusted node .rerun-trusted/scripts/ai-review-rerun.mjs
-          else
+          elif [ "${GITHUB_EVENT_NAME}" = "pull_request_review" ]; then
             echo "::warning::Trusted AI review rerun script missing on default branch; using PR script for first-install bootstrap only."
             node scripts/ai-review-rerun.mjs
+          else
+            echo "::warning::Trusted AI review rerun script missing on default branch; skipping issue-comment bootstrap because PR-head content is not checked out for this event."
           fi
         env:
           GITHUB_TOKEN: ${{ github.token }}

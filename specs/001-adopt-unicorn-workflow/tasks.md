@@ -148,6 +148,13 @@
   trusted default-branch scripts before the new rerun script existed on `main`.
   Mirrored the existing bootstrap pattern: prefer trusted default-branch rerun
   scripts, otherwise use the PR-local script only for first-install bootstrap.
+- Codex found three P2 issues in the imported rerun path: workflow-level bot
+  filters could bypass configured trusted-login overrides; issue-comment
+  bootstrap could still try to run a missing default-branch script; and rerun
+  selection could rerun an older failed check after a newer success. The rerun
+  workflow now lets the trusted script enforce review-login policy, only uses
+  PR-local fallback when a pull-request-review event exposes the PR head, and
+  treats the latest successful current-head AI Review run as terminal.
 
 ### Decisions
 
@@ -183,6 +190,9 @@
 - Trusted `AI Review Rerun` scripts must read trusted default-branch config via
   `AI_REVIEW_CONFIG_ROOT`; PR-local config is allowed only in the bootstrap
   fallback before the script exists on `main`.
+- Keep `AI Review Rerun` workflow filters broad and cheap; trust decisions
+  belong in `scripts/ai-review-rerun.mjs` with the configured reviewer
+  allowlists.
 
 ### Known Issues
 

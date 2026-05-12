@@ -217,6 +217,30 @@ test("AI Review rerun selector prefers active runs, then latest rerunnable failu
   });
 });
 
+test("AI Review rerun selector does not rerun stale failures after a newer success", () => {
+  const failure = {
+    id: 10,
+    event: "pull_request",
+    head_sha: "abc",
+    status: "completed",
+    conclusion: "failure",
+    created_at: "2026-05-01T10:00:00Z"
+  };
+  const success = {
+    id: 11,
+    event: "pull_request",
+    head_sha: "abc",
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-05-01T10:05:00Z"
+  };
+
+  assert.deepEqual(selectAiReviewRun([failure, success], "abc"), {
+    action: "already_success",
+    run: success
+  });
+});
+
 test("AI Review rerun helper calls the workflow rerun endpoint for current-head failure", async () => {
   const calls = [];
   const request = async (_token, _repository, path, options = {}) => {
