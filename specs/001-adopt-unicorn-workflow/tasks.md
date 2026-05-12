@@ -36,8 +36,8 @@
 - `AI Review` now accepts a trusted human `@codex review` comment on the
   current head as the request marker when Actions-authored marker comments are
   blocked by GitHub, and binds that fallback to the PR head update timestamp
-  from the Actions event or dispatch input, plus any later force-push event in
-  the PR timeline.
+  from the Actions webhook payload plus any later force-push event in the PR
+  timeline.
 
 ## Process Memory
 
@@ -139,8 +139,8 @@
   and dispatch trusted workflows.
 - Accept trusted human `@codex review` comments as Codex request markers when
   GitHub blocks Actions-authored marker comments, but bind them to the latest
-  PR head update timestamp from the Actions event or trusted dispatch input so
-  stale summaries cannot satisfy a newer push.
+  PR head update timestamp from the Actions webhook payload so stale summaries
+  cannot satisfy a newer push.
 - Treat Actions-authored marker comments as optional when GitHub rejects them;
   the trusted dispatch path is the durable signal in that environment.
 - Use strict greater-than (not greater-or-equal) when comparing trusted human
@@ -189,3 +189,14 @@
   markerless pull-request-triggered native reviews.
 - For comment-based review backends, later trusted outcomes supersede earlier
   ones for the same head SHA.
+- The bootstrap human-trigger fallback only has a trusted lower bound when the
+  AI Review run is `pull_request`-triggered (the webhook payload supplies
+  `pull_request.updated_at`) or when a `head_ref_force_pushed` event exists on
+  the PR head. The `workflow_dispatch + Actions marker 403 + conventional
+  push` edge case has no server-assigned, comment-untainted timestamp source
+  available via the GitHub REST or GraphQL surfaces, so the gate cannot
+  synthesise a fallback marker in that narrow path. In that case the dispatch
+  still runs and Codex native review evidence on the current head is the only
+  source the gate accepts. Follow-up: address the 403 root cause (tune
+  repository Actions permissions or post markers from a GitHub App with PR
+  comment scope) so the bootstrap fallback shim is not exercised.
