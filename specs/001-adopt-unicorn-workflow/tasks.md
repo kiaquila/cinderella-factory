@@ -20,6 +20,17 @@
 - [x] T010 Open PR and trigger Codex review.
 - [x] T011 Record GitHub CI/CD outcome.
 
+## Follow-Up: Marker Permissions And Pipeline Sync
+
+- [x] T012 Grant `pull-requests: write` to trusted AI review workflows so
+  Actions-authored PR marker comments can use the PR comment permission family,
+  not only `issues: write`.
+- [ ] T013 Import missing event-driven Unicorn Hub AI Review rerun pipeline
+  pieces without reverting Cinderella Factory's head-bound gate hardening.
+- [ ] T014 Add local verification for the imported rerun helpers and syntax
+  checks.
+- [ ] T015 Open follow-up PR and trigger Codex review.
+
 ### GitHub CI/CD Outcome
 
 - PR #1 (`[codex] Adopt Unicorn Hub workflow`) merged into `main` on
@@ -125,6 +136,10 @@
   tainted source and the dispatch input; the gate now derives the lower bound
   only from the trusted webhook `pull_request.updated_at` and force-push
   timeline events.
+- GitHub kept returning `403 Resource not accessible by integration` for PR
+  marker comments even when `GITHUB_TOKEN` had `issues: write`. The follow-up
+  root-cause attempt grants `pull-requests: write` to the trusted comment and
+  gate workflows so comments on pull requests can use the PR permission family.
 
 ### Decisions
 
@@ -150,6 +165,9 @@
   comment-untainted signals: `github.event.pull_request.updated_at` from the
   webhook payload and `head_ref_force_pushed` timeline events. Reject the
   Pulls API `pull.updated_at` because GitHub bumps it on comment activity.
+- Keep the bootstrap human-trigger fallback until a real follow-up PR proves
+  that Actions-authored marker comments can be posted again with the narrowed
+  workflow permission change.
 
 ### Known Issues
 
@@ -197,6 +215,7 @@
   available via the GitHub REST or GraphQL surfaces, so the gate cannot
   synthesise a fallback marker in that narrow path. In that case the dispatch
   still runs and Codex native review evidence on the current head is the only
-  source the gate accepts. Follow-up: address the 403 root cause (tune
-  repository Actions permissions or post markers from a GitHub App with PR
-  comment scope) so the bootstrap fallback shim is not exercised.
+  source the gate accepts. Follow-up verification should confirm whether
+  `pull-requests: write` resolves the marker-comment 403; if not, use a GitHub
+  App token with PR comment scope so the bootstrap fallback shim is not
+  exercised.
