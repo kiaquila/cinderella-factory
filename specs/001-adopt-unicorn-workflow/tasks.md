@@ -155,6 +155,16 @@
   workflow now lets the trusted script enforce review-login policy, only uses
   PR-local fallback when a pull-request-review event exposes the PR head, and
   treats the latest successful current-head AI Review run as terminal.
+- Internal review (code-reviewer agent, 2026-05-13) flagged a HIGH gap in
+  `shouldRouteAiReviewRerunEvent`: `pull_request_review` events were accepted
+  without binding `event.review.commit_id` to `event.pull_request.head.sha`, so
+  a stale review on an older PR head could trigger a rerun for the current
+  head. The router now rejects the event when both fields are present and
+  disagree.
+- Internal review (code-reviewer agent, 2026-05-13) flagged `listPaginated` had
+  no max-page cap and assumed `data.workflow_runs` was always an array. Added a
+  50-page hard cap and an `Array.isArray` guard so a malformed GitHub response
+  cannot spin into an unbounded loop.
 
 ### Decisions
 
@@ -193,6 +203,9 @@
 - Keep `AI Review Rerun` workflow filters broad and cheap; trust decisions
   belong in `scripts/ai-review-rerun.mjs` with the configured reviewer
   allowlists.
+- Bind `pull_request_review` rerun evidence to the current PR head via
+  `event.review.commit_id` so stale bot reviews on older heads cannot trigger
+  a rerun against the new head.
 
 ### Known Issues
 
@@ -217,6 +230,16 @@
   trigger on `AI Review`.
 - Review backend selection must travel with the trusted dispatch; do not infer
   every comment-triggered run from the repository default variable.
+- Residual: while `scripts/ai-review-rerun.mjs` is missing from `main`, the
+  bootstrap fallback in `ai-review-rerun.yml` reads PR-controlled
+  `.unicorn-hub/config.json` because `AI_REVIEW_CONFIG_ROOT` is unset on that
+  path. After this PR merges, the helper exists on `main` and the fallback
+  branch is dead code; `scripts/check-repo-baseline.mjs` prevents accidental
+  removal that would re-open the window.
+- Follow-up: drop `issue_comment.edited` from the `AI Review Rerun` workflow
+  trigger types; trusted bot reviews are posted as new comments, and accepting
+  `edited` only widens the surface for repeated rerun triggers from a single
+  attacker-controlled comment edit.
 - Comment-triggered dispatch only supports branches in the base repository;
   fork PRs need pull-request-triggered review or a maintainer branch.
 - Native Codex reviews are strong current-head evidence on their own. Request

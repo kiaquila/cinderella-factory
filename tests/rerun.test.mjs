@@ -82,6 +82,38 @@ test("AI Review rerun event filter accepts trusted selected-agent evidence", () 
   );
 });
 
+test("AI Review rerun event filter binds review evidence to current PR head", () => {
+  assert.equal(
+    shouldRouteAiReviewRerunEvent(
+      {
+        review: {
+          user: { login: "chatgpt-codex-connector[bot]" },
+          commit_id: "old-sha"
+        },
+        pull_request: { head: { sha: "new-sha" } }
+      },
+      "codex"
+    ),
+    false,
+    "review submitted against a stale PR head must not trigger rerun"
+  );
+
+  assert.equal(
+    shouldRouteAiReviewRerunEvent(
+      {
+        review: {
+          user: { login: "chatgpt-codex-connector[bot]" },
+          commit_id: "current-sha"
+        },
+        pull_request: { head: { sha: "current-sha" } }
+      },
+      "codex"
+    ),
+    true,
+    "review on current PR head from trusted login must trigger rerun"
+  );
+});
+
 test("AI Review rerun event filter rejects untrusted review evidence", () => {
   assert.equal(
     shouldRouteAiReviewRerunEvent(
@@ -239,6 +271,18 @@ test("AI Review rerun selector does not rerun stale failures after a newer succe
     action: "already_success",
     run: success
   });
+});
+
+test("AI Review rerun helper tolerates malformed pagination response", async () => {
+  const request = async () => null;
+  const result = await rerunAiReviewForPrHead({
+    token: "token",
+    repository: "owner/repo",
+    headSha: "abc",
+    request
+  });
+  assert.equal(result.action, "not_found");
+  assert.match(result.message, /No completed AI Review/);
 });
 
 test("AI Review rerun helper calls the workflow rerun endpoint for current-head failure", async () => {

@@ -18,8 +18,11 @@ export function shouldRouteAiReviewRerunEvent(event, selectedAgent = "codex", co
   const agent = normalizeAgent(selectedAgent);
 
   if (event?.review) {
-    return ["codex", "gemini"].includes(agent) &&
-      isTrustedReviewLogin(event.review.user?.login, agent, config);
+    if (!["codex", "gemini"].includes(agent)) return false;
+    const reviewSha = event.review.commit_id;
+    const headSha = event.pull_request?.head?.sha;
+    if (reviewSha && headSha && reviewSha !== headSha) return false;
+    return isTrustedReviewLogin(event.review.user?.login, agent, config);
   }
 
   if (!event?.issue?.pull_request || !event?.comment) return false;
@@ -75,15 +78,19 @@ async function defaultRequest(token, repository, path, options = {}) {
   return text ? JSON.parse(text) : null;
 }
 
+const PAGINATION_MAX_PAGES = 50;
+
 async function listPaginated(request, token, repository, path) {
   const items = [];
   const separator = path.includes("?") ? "&" : "?";
-  for (let page = 1; ; page += 1) {
+  for (let page = 1; page <= PAGINATION_MAX_PAGES; page += 1) {
     const data = await request(token, repository, `${path}${separator}per_page=100&page=${page}`);
-    const batch = data.workflow_runs || data;
+    const rawBatch = data?.workflow_runs ?? data;
+    const batch = Array.isArray(rawBatch) ? rawBatch : [];
     items.push(...batch);
     if (batch.length < 100) return items;
   }
+  return items;
 }
 
 export async function rerunAiReviewForPrHead({
