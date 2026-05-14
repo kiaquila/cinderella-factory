@@ -20,6 +20,12 @@
 - [x] T010 Open PR and trigger Codex review.
 - [x] T011 Record GitHub CI/CD outcome.
 
+## Follow-Up: Claude Auto-Loaded References
+
+- [x] T012 Use `@` references for auto-loaded files in `CLAUDE.md`.
+- [x] T013 Re-run local preflight after the `CLAUDE.md` reference syntax
+  update.
+
 ### GitHub CI/CD Outcome
 
 - PR #1 (`[codex] Adopt Unicorn Hub workflow`) merged into `main` on
@@ -150,6 +156,8 @@
   comment-untainted signals: `github.event.pull_request.updated_at` from the
   webhook payload and `head_ref_force_pushed` timeline events. Reject the
   Pulls API `pull.updated_at` because GitHub bumps it on comment activity.
+- Use Claude Code `@` file-reference syntax in `CLAUDE.md` for the durable
+  files that should be auto-loaded before implementation work.
 
 ### Known Issues
 
