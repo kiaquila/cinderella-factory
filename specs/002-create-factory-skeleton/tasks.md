@@ -20,8 +20,8 @@
 
 ## Verification
 
-- [ ] T011 Run skeleton file listing check.
-- [ ] T012 Run `pnpm run preflight`.
+- [x] T011 Run skeleton file listing check.
+- [x] T012 Run `pnpm run preflight`.
 - [ ] T013 Open one PR and trigger Codex review.
 - [ ] T014 Record GitHub CI/CD outcome.
 
@@ -39,6 +39,9 @@
   orchestrator can describe all three planned starter routes.
 - Keep initial memory files as placeholders until the owner explicitly saves
   durable personal details.
+- Local verification passed on 2026-05-16 with
+  `rg --files orchestrator agents skills context knowledge memory templates evals`
+  and `pnpm run preflight`.
 
 ### Known Issues
 
