@@ -52,10 +52,12 @@ if (config.blueprint) {
     "scripts/check-repo-baseline.mjs",
     "scripts/ai-command-policy.mjs",
     "scripts/ai-review-gate.mjs",
+    "scripts/ai-review-rerun.mjs",
     "scripts/set-implementation-agent.mjs",
     ".github/workflows/ci.yml",
     ".github/workflows/pr-guard.yml",
     ".github/workflows/ai-review.yml",
+    ".github/workflows/ai-review-rerun.yml",
     ".github/workflows/ai-command-policy.yml"
   ]) {
     if (excluded.has(path)) continue;

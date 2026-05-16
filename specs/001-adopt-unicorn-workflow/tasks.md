@@ -26,6 +26,17 @@
 - [x] T013 Re-run local preflight after the `CLAUDE.md` reference syntax
   update.
 
+## Follow-Up: Marker Permissions And Pipeline Sync
+
+- [x] T014 Grant `pull-requests: write` to trusted AI review workflows so
+  Actions-authored PR marker comments can use the PR comment permission family,
+  not only `issues: write`.
+- [x] T015 Import missing event-driven Unicorn Hub AI Review rerun pipeline
+  pieces without reverting Cinderella Factory's head-bound gate hardening.
+- [x] T016 Add local verification for the imported rerun helpers and syntax
+  checks.
+- [ ] T017 Open follow-up PR and trigger Codex review.
+
 ### GitHub CI/CD Outcome
 
 - PR #1 (`[codex] Adopt Unicorn Hub workflow`) merged into `main` on
@@ -131,6 +142,35 @@
   tainted source and the dispatch input; the gate now derives the lower bound
   only from the trusted webhook `pull_request.updated_at` and force-push
   timeline events.
+- GitHub kept returning `403 Resource not accessible by integration` for PR
+  marker comments even when `GITHUB_TOKEN` had `issues: write`. The follow-up
+  root-cause attempt grants `pull-requests: write` to the trusted comment and
+  gate workflows so comments on pull requests can use the PR permission family.
+- Unicorn Hub added an event-driven `AI Review Rerun` workflow after the
+  bootstrap import. Imported the rerun workflow, helper, and focused tests
+  without replacing Cinderella Factory's default-branch dispatch flow or the
+  current-head review gate hardening added during PR #2.
+- The first PR run of `AI Review Rerun` failed because the workflow checked out
+  trusted default-branch scripts before the new rerun script existed on `main`.
+  Mirrored the existing bootstrap pattern: prefer trusted default-branch rerun
+  scripts, otherwise use the PR-local script only for first-install bootstrap.
+- Codex found three P2 issues in the imported rerun path: workflow-level bot
+  filters could bypass configured trusted-login overrides; issue-comment
+  bootstrap could still try to run a missing default-branch script; and rerun
+  selection could rerun an older failed check after a newer success. The rerun
+  workflow now lets the trusted script enforce review-login policy, only uses
+  PR-local fallback when a pull-request-review event exposes the PR head, and
+  treats the latest successful current-head AI Review run as terminal.
+- Internal review (code-reviewer agent, 2026-05-13) flagged a HIGH gap in
+  `shouldRouteAiReviewRerunEvent`: `pull_request_review` events were accepted
+  without binding `event.review.commit_id` to `event.pull_request.head.sha`, so
+  a stale review on an older PR head could trigger a rerun for the current
+  head. The router now rejects the event when both fields are present and
+  disagree.
+- Internal review (code-reviewer agent, 2026-05-13) flagged `listPaginated` had
+  no max-page cap and assumed `data.workflow_runs` was always an array. Added a
+  50-page hard cap and an `Array.isArray` guard so a malformed GitHub response
+  cannot spin into an unbounded loop.
 
 ### Decisions
 
@@ -156,8 +196,24 @@
   comment-untainted signals: `github.event.pull_request.updated_at` from the
   webhook payload and `head_ref_force_pushed` timeline events. Reject the
   Pulls API `pull.updated_at` because GitHub bumps it on comment activity.
+- Keep the bootstrap human-trigger fallback until a real follow-up PR proves
+  that Actions-authored marker comments can be posted again with the narrowed
+  workflow permission change.
 - Use Claude Code `@` file-reference syntax in `CLAUDE.md` for the durable
   files that should be auto-loaded before implementation work.
+- Use `AI Review Rerun` only to rerun failed, cancelled, timed-out, or
+  action-required pull-request-triggered `AI Review` runs after trusted bot
+  evidence appears. Comment-triggered trusted dispatch continues to publish its
+  PR-head check through the existing workflow-dispatch path.
+- Trusted `AI Review Rerun` scripts must read trusted default-branch config via
+  `AI_REVIEW_CONFIG_ROOT`; PR-local config is allowed only in the bootstrap
+  fallback before the script exists on `main`.
+- Keep `AI Review Rerun` workflow filters broad and cheap; trust decisions
+  belong in `scripts/ai-review-rerun.mjs` with the configured reviewer
+  allowlists.
+- Bind `pull_request_review` rerun evidence to the current PR head via
+  `event.review.commit_id` so stale bot reviews on older heads cannot trigger
+  a rerun against the new head.
 
 ### Known Issues
 
@@ -182,6 +238,16 @@
   trigger on `AI Review`.
 - Review backend selection must travel with the trusted dispatch; do not infer
   every comment-triggered run from the repository default variable.
+- Residual: while `scripts/ai-review-rerun.mjs` is missing from `main`, the
+  bootstrap fallback in `ai-review-rerun.yml` reads PR-controlled
+  `.unicorn-hub/config.json` because `AI_REVIEW_CONFIG_ROOT` is unset on that
+  path. After this PR merges, the helper exists on `main` and the fallback
+  branch is dead code; `scripts/check-repo-baseline.mjs` prevents accidental
+  removal that would re-open the window.
+- Follow-up: drop `issue_comment.edited` from the `AI Review Rerun` workflow
+  trigger types; trusted bot reviews are posted as new comments, and accepting
+  `edited` only widens the surface for repeated rerun triggers from a single
+  attacker-controlled comment edit.
 - Comment-triggered dispatch only supports branches in the base repository;
   fork PRs need pull-request-triggered review or a maintainer branch.
 - Native Codex reviews are strong current-head evidence on their own. Request
@@ -205,6 +271,7 @@
   available via the GitHub REST or GraphQL surfaces, so the gate cannot
   synthesise a fallback marker in that narrow path. In that case the dispatch
   still runs and Codex native review evidence on the current head is the only
-  source the gate accepts. Follow-up: address the 403 root cause (tune
-  repository Actions permissions or post markers from a GitHub App with PR
-  comment scope) so the bootstrap fallback shim is not exercised.
+  source the gate accepts. Follow-up verification should confirm whether
+  `pull-requests: write` resolves the marker-comment 403; if not, use a GitHub
+  App token with PR comment scope so the bootstrap fallback shim is not
+  exercised.

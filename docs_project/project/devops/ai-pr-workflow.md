@@ -15,13 +15,17 @@ AI_REVIEW_AGENT=codex
 ```
 
 Repository Actions workflow permissions must allow read/write `GITHUB_TOKEN`
-access so gate workflows can publish checks and dispatch trusted validation.
-If GitHub refuses Actions-authored marker comments with `403 Resource not
-accessible by integration`, `AI Review` accepts a trusted human `@codex review`
-comment on the current head as the request marker, but only when that request
-is strictly newer than every server-assigned lower bound: the
-`pull_request.updated_at` timestamp from the Actions webhook payload and any
-`head_ref_force_pushed` timeline event. The gate does not consult the Pulls
+access so gate workflows can publish checks, dispatch trusted validation, and
+write PR marker comments. `AI Command Policy` and `AI Review` request both
+`issues: write` and `pull-requests: write` because GitHub can require either
+permission family for comments on pull requests.
+
+If GitHub still refuses Actions-authored marker comments with `403 Resource
+not accessible by integration`, `AI Review` accepts a trusted human
+`@codex review` comment on the current head as the request marker, but only
+when that request is strictly newer than every server-assigned lower bound:
+the `pull_request.updated_at` timestamp from the Actions webhook payload and
+any `head_ref_force_pushed` timeline event. The gate does not consult the Pulls
 API `updated_at` field because GitHub bumps it on comment activity, which
 taints the comparison. Marker-comment creation is best-effort; the trusted
 dispatch path still runs.
@@ -39,6 +43,9 @@ Current-head native Codex reviews can satisfy the gate without a request marker;
 summary-only evidence still requires a trusted marker.
 For native review backends, `CHANGES_REQUESTED` and configured blocking
 severities in either review summaries or inline comments keep the gate red.
+When trusted bot review evidence arrives after a pull-request-triggered
+`AI Review` run already failed or timed out, `AI Review Rerun` reruns the
+current-head pull request run instead of requiring another human command.
 
 Branch protection should be applied after this workflow is merged to `main`:
 
