@@ -12,10 +12,10 @@
 - [x] T005 Add reusable templates for agents, skills, and memory notes.
 - [x] T006 Add orchestrator v1 contract, routing, context assembly, and
   activation policy.
-- [ ] T007 Add starter agent contracts for `mila`, `salesman`, and
+- [x] T007 Add starter agent contracts for `mila`, `salesman`, and
   `pediatrician`.
-- [ ] T008 Add starter procedural skills.
-- [ ] T009 Add scoped context, knowledge, memory, and eval entry points.
+- [x] T008 Add starter procedural skills.
+- [x] T009 Add scoped context, knowledge, memory, and eval entry points.
 - [x] T010 Update README repository map.
 
 ## Verification
