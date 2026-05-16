@@ -20,16 +20,22 @@
 - [x] T010 Open PR and trigger Codex review.
 - [x] T011 Record GitHub CI/CD outcome.
 
+## Follow-Up: Claude Auto-Loaded References
+
+- [x] T012 Use `@` references for auto-loaded files in `CLAUDE.md`.
+- [x] T013 Re-run local preflight after the `CLAUDE.md` reference syntax
+  update.
+
 ## Follow-Up: Marker Permissions And Pipeline Sync
 
-- [x] T012 Grant `pull-requests: write` to trusted AI review workflows so
+- [x] T014 Grant `pull-requests: write` to trusted AI review workflows so
   Actions-authored PR marker comments can use the PR comment permission family,
   not only `issues: write`.
-- [x] T013 Import missing event-driven Unicorn Hub AI Review rerun pipeline
+- [x] T015 Import missing event-driven Unicorn Hub AI Review rerun pipeline
   pieces without reverting Cinderella Factory's head-bound gate hardening.
-- [x] T014 Add local verification for the imported rerun helpers and syntax
+- [x] T016 Add local verification for the imported rerun helpers and syntax
   checks.
-- [ ] T015 Open follow-up PR and trigger Codex review.
+- [ ] T017 Open follow-up PR and trigger Codex review.
 
 ### GitHub CI/CD Outcome
 
@@ -193,6 +199,8 @@
 - Keep the bootstrap human-trigger fallback until a real follow-up PR proves
   that Actions-authored marker comments can be posted again with the narrowed
   workflow permission change.
+- Use Claude Code `@` file-reference syntax in `CLAUDE.md` for the durable
+  files that should be auto-loaded before implementation work.
 - Use `AI Review Rerun` only to rerun failed, cancelled, timed-out, or
   action-required pull-request-triggered `AI Review` runs after trusted bot
   evidence appears. Comment-triggered trusted dispatch continues to publish its
