@@ -9,14 +9,14 @@
 ## Implementation
 
 - [x] T004 Update stale prior feature memory in a separate commit.
-- [ ] T005 Add reusable templates for agents, skills, and memory notes.
-- [ ] T006 Add orchestrator v1 contract, routing, context assembly, and
+- [x] T005 Add reusable templates for agents, skills, and memory notes.
+- [x] T006 Add orchestrator v1 contract, routing, context assembly, and
   activation policy.
 - [ ] T007 Add starter agent contracts for `mila`, `salesman`, and
   `pediatrician`.
 - [ ] T008 Add starter procedural skills.
 - [ ] T009 Add scoped context, knowledge, memory, and eval entry points.
-- [ ] T010 Update README repository map.
+- [x] T010 Update README repository map.
 
 ## Verification
 
