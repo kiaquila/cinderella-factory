@@ -22,14 +22,17 @@
 
 - [x] T011 Run skeleton file listing check.
 - [x] T012 Run `pnpm run preflight`.
-- [ ] T013 Open one PR and trigger Codex review.
+- [x] T013 Open one PR and trigger Codex review.
 - [ ] T014 Record GitHub CI/CD outcome.
 
 ## Process Memory
 
 ### Dead Ends
 
-- None yet.
+- Codex review found that the first router table could treat unsafe Mila
+  requests as "avoid route", which risked skipping Mila's safety policy. Updated
+  routing so unsafe in-domain relationship requests go to Mila for boundary
+  handling, refusal, or reframe.
 
 ### Decisions
 
