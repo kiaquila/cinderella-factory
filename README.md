@@ -23,10 +23,15 @@ This repository uses a portable multi-agent development workflow:
 - `docs_project/` stores durable project context for agents and humans.
 - `specs/<feature-id>/` stores one feature's spec, plan, and task memory.
 - `.specify/` stores repository-wide process rules and templates.
+- `orchestrator/` stores routing, activation, and context assembly rules.
+- `agents/` stores specialist agent contracts and safety policies.
+- `skills/` stores procedural workflows agents can use.
+- `context/` stores owner-specific context with domain scopes.
+- `knowledge/` stores non-memory domain doctrine and reference distillations.
+- `memory/` stores shared, agent-scoped, and session-scoped memory.
+- `templates/` stores reusable contract templates.
+- `evals/` stores planned eval packs for routing, safety, and privacy.
 - `scripts/` contains local and CI gate helpers adapted from Unicorn Hub.
-
-Future product folders will include `orchestrator/`, `agents/`, `skills/`,
-`context/`, `knowledge/`, `memory/`, `templates/`, and `evals/`.
 
 ## First Setup After Bootstrap
 

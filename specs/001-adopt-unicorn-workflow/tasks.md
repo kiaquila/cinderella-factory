@@ -35,7 +35,7 @@
   pieces without reverting Cinderella Factory's head-bound gate hardening.
 - [x] T016 Add local verification for the imported rerun helpers and syntax
   checks.
-- [ ] T017 Open follow-up PR and trigger Codex review.
+- [x] T017 Open follow-up PR and trigger Codex review.
 
 ### GitHub CI/CD Outcome
 
@@ -55,6 +55,10 @@
   blocked by GitHub, and binds that fallback to the PR head update timestamp
   from the Actions webhook payload plus any later force-push event in the PR
   timeline.
+- PR #3 (`[codex] Import Unicorn pipeline reruns`) merged into `main` on
+  2026-05-16 at merge commit `7bd3a30fafaff4831cc00a8f50a4dc9c2d3d6d1e`.
+  Required PR checks completed successfully: `baseline-checks`, `guard`,
+  `AI Review`, and `osv-scan`.
 
 ## Process Memory
 
