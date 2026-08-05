@@ -53,6 +53,7 @@ If project docs already exist, use the same protocol to review and refresh them.
 pnpm run preflight
 pnpm run worktree:new -- --slug 001-example
 pnpm run pr:publish
+pnpm run install:claude   # symlink design-team roles/skills into ~/.claude
 ```
 
 ## Required PR Checks
