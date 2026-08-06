@@ -63,6 +63,11 @@
   Claude Code subagents did not preload the skills named only in prose/factory
   metadata. Both role frontmatters now declare their appropriate `skills` lists,
   with regression coverage for the exact preload set.
+- Codex follow-up review (2026-08-06, `955d366`) found one P2 process-evidence
+  gap: the preflight result after adding the role preload declarations and
+  twelfth test had not been recorded here.
+- `pnpm run preflight` after the role preload fix: all gates passed and 12/12
+  node tests are green, including the exact role skill-preload assertions.
 
 ## Process Memory
 
