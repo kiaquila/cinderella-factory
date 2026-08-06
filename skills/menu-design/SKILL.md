@@ -1,6 +1,15 @@
 ---
 name: menu-design
-description: Design and lay out restaurant/cafe/bar menus that sell — category architecture and scanning, menu engineering (anchors, highlights, placement), price presentation without price-dumping, dish naming and descriptions, typography for dim light and small screens, dietary/allergen marks, multilingual layout, web/QR and print delivery. Pure methodology — dishes, prices, and claims always come from the client, never invented. Use when designing or reviewing any menu: a menu page on a website, a QR menu, a wine/bar list, or a print menu. Triggers: menu, restaurant menu, QR menu, wine list, drink list, верстка меню, меню ресторана, дизайн меню.
+description: >-
+  Design and lay out restaurant/cafe/bar menus that sell — category architecture
+  and scanning, menu engineering (anchors, highlights, placement), price
+  presentation without price-dumping, dish naming and descriptions, typography
+  for dim light and small screens, dietary/allergen marks, multilingual layout,
+  web/QR and print delivery. Pure methodology — dishes, prices, and claims always
+  come from the client, never invented. Use when designing or reviewing any menu:
+  a menu page on a website, a QR menu, a wine/bar list, or a print menu. Triggers:
+  menu, restaurant menu, QR menu, wine list, drink list, верстка меню, меню
+  ресторана, дизайн меню.
 user-invocable: true
 ---
 

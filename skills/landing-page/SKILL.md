@@ -1,6 +1,15 @@
 ---
 name: landing-page
-description: Design and build premium, high-converting landing pages — offer clarity and the one-goal/one-CTA rule, narrative block architecture (hero → problem → solution → proof → offer → objections → action), social proof that is real, premium visual language (restraint, whitespace, typography) without conversion loss, mobile-first above-the-fold, performance and accessibility budgets, honest persuasion with no dark patterns or fabricated proof. Use when creating or reviewing a landing page, promo page, or product one-pager. Triggers: landing, landing page, лендинг, продающая страница, hero section, conversion, CTA, promo page, одностраничник.
+description: >-
+  Design and build premium, high-converting landing pages — offer clarity and the
+  one-goal/one-CTA rule, narrative block architecture (hero → problem → solution
+  → proof → offer → objections → action), social proof that is real, premium
+  visual language (restraint, whitespace, typography) without conversion loss,
+  mobile-first above-the-fold, performance and accessibility budgets, honest
+  persuasion with no dark patterns or fabricated proof. Use when creating or
+  reviewing a landing page, promo page, or product one-pager. Triggers: landing,
+  landing page, лендинг, продающая страница, hero section, conversion, CTA, promo
+  page, одностраничник.
 user-invocable: true
 ---
 

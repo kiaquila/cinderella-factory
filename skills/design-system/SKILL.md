@@ -1,6 +1,15 @@
 ---
 name: design-system
-description: Establish, extend, and keep consistent a product's design system — foundation tokens (color, type, spacing, radius, shadow, icons), the core component set with all states, and the "change at the right level" discipline. Adapts to the project's real starting point (no system / partial / complete-and-consistent / complete-but-inconsistent). Use whenever building or changing UI, adding a component, touching tokens, or auditing visual consistency. Shared by the ui-ux-designer and frontend roles. Triggers: design system, design tokens, component library, visual consistency, foundation, spacing/color/radius scale, "make the UI consistent".
+description: >-
+  Establish, extend, and keep consistent a product's design system — foundation
+  tokens (color, type, spacing, radius, shadow, icons), the core component set
+  with all states, and the "change at the right level" discipline. Adapts to the
+  project's real starting point (no system / partial / complete-and-consistent /
+  complete-but-inconsistent). Use whenever building or changing UI, adding a
+  component, touching tokens, or auditing visual consistency. Shared by the
+  ui-ux-designer and frontend roles. Triggers: design system, design tokens,
+  component library, visual consistency, foundation, spacing/color/radius scale,
+  "make the UI consistent".
 user-invocable: true
 ---
 

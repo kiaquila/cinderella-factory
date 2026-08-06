@@ -28,7 +28,9 @@ Adopt the three-layer contract model already used by this factory (constitution
   the contract self-contained. Deviation from `templates/agent-template.md` is
   deliberate and recorded here.
 - **Symlinks, not copies.** Copies drift; the whole point of the migration is a
-  single reviewable source. Backup-then-link keeps the installer non-destructive.
+  single reviewable source. Backup-then-link keeps the installer non-destructive;
+  numeric backup suffixes preserve earlier backups when the canonical name is
+  already occupied.
 - **No mila/salesman/pediatrician installation.** Different runtime; out of
   scope by contract.
 

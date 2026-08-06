@@ -1,6 +1,14 @@
 ---
 name: design-handoff
-description: Turn a design decision into a behavior specification and a per-screen handoff checklist so frontend implements it without guessing. Covers interaction (hover/click), empty/error/loading states, responsive/mobile, long-text and no-data edge cases, editable vs read-only, destructive actions and confirmations. Use at the design→frontend boundary, before implementing a screen, or when reviewing whether a screen is ready to build. Triggers: handoff, spec, behavior spec, ready for dev, implementation checklist, edge cases, states matrix.
+description: >-
+  Turn a design decision into a behavior specification and a per-screen handoff
+  checklist so frontend implements it without guessing. Covers interaction
+  (hover/click), empty/error/loading states, responsive/mobile, long-text and
+  no-data edge cases, editable vs read-only, destructive actions and
+  confirmations. Use at the design→frontend boundary, before implementing a
+  screen, or when reviewing whether a screen is ready to build. Triggers:
+  handoff, spec, behavior spec, ready for dev, implementation checklist, edge
+  cases, states matrix.
 user-invocable: true
 ---
 

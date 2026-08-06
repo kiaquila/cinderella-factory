@@ -36,6 +36,12 @@
 - `pnpm run preflight` (2026-08-05): feature-memory gate passed via
   `specs/003-design-team/{spec,plan,tasks}.md`; script syntax checks clean;
   8/8 node tests pass.
+- Codex review (2026-08-06, `31b3ff4`) found two P1 regressions: YAML-unsafe
+  skill descriptions and destructive reuse of an existing installer backup.
+  Both now have dedicated regression coverage.
+- `pnpm run preflight` (2026-08-06): feature-memory and syntax gates passed;
+  10/10 node tests pass, including YAML-safe frontmatter and backup-collision
+  regressions.
 
 ## Process Memory
 
@@ -49,6 +55,10 @@
   contract survives being loaded standalone by the Claude Code runtime.
 - Installer intentionally refuses non-dry runs from `.claude/worktrees/*` so
   `~/.claude` symlinks can never point into a temporary worktree.
+- Skill descriptions use folded YAML block scalars so trigger phrases may safely
+  contain `: ` without breaking Claude frontmatter parsing.
+- If the canonical `.pre-factory-backup` already exists, the installer selects
+  the first free numeric suffix (`.1`, `.2`, ...) instead of overwriting it.
 
 ### Known Issues
 

@@ -68,7 +68,13 @@ for (const { linkPath, target } of links) {
     console.log(`relink  ${linkPath} -> ${target}`);
     if (!dryRun) unlinkSync(linkPath);
   } else if (current) {
-    const backup = `${linkPath}.pre-factory-backup`;
+    const backupBase = `${linkPath}.pre-factory-backup`;
+    let backup = backupBase;
+    let suffix = 1;
+    while (existsSync(backup)) {
+      backup = `${backupBase}.${suffix}`;
+      suffix += 1;
+    }
     console.log(`backup  ${linkPath} -> ${backup}`);
     if (!dryRun) renameSync(linkPath, backup);
     console.log(`link    ${linkPath} -> ${target}`);

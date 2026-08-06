@@ -1,6 +1,13 @@
 ---
 name: design-review
-description: Critique a UI as a design reviewer (not a generator) — catch AI-generated blandness, weak visual hierarchy, low contrast/readability, missing interaction states, unclear first-run, and over-nested cards; then verify on the live screen (desktop + mobile, real data, hover/focus, empty/error). Use to review a screen or the whole app's UI/UX, before shipping, or when something "looks off / looks AI-generated". Triggers: design review, UI review, UX review, critique this UI, looks AI-generated, visual QA, review the screen, is this good design.
+description: >-
+  Critique a UI as a design reviewer (not a generator) — catch AI-generated
+  blandness, weak visual hierarchy, low contrast/readability, missing interaction
+  states, unclear first-run, and over-nested cards; then verify on the live screen
+  (desktop + mobile, real data, hover/focus, empty/error). Use to review a screen
+  or the whole app's UI/UX, before shipping, or when something "looks off / looks
+  AI-generated". Triggers: design review, UI review, UX review, critique this UI,
+  looks AI-generated, visual QA, review the screen, is this good design.
 user-invocable: true
 ---
 

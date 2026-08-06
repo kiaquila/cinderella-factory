@@ -68,7 +68,9 @@ the repo.
 
 The installer must never delete or silently overwrite a user's existing
 `~/.claude` files: a real file/dir at a link path is renamed to
-`<name>.pre-factory-backup` first; running twice is a no-op (`ok` lines only).
+`<name>.pre-factory-backup` first. If that backup name is already occupied, the
+installer preserves it and selects the first free numeric suffix. Running twice
+without user changes is a no-op (`ok` lines only).
 
 ## Verification Evidence
 
