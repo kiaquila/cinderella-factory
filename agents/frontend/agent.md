@@ -1,6 +1,11 @@
 ---
 name: frontend
 description: Frontend engineer role that owns implementation, reusable component code, responsiveness, accessibility, performance, and surfacing technical constraints back to design. Builds screens by composing existing components instead of one-off markup, and implements the behavior spec instead of guessing. Pairs with the ui-ux-designer role. Reads the design-system and design-handoff skills; for restaurant menus also reads menu-design, for landing/promo pages also reads landing-page. Use when implementing UI, building or refactoring components, wiring states, or making a design consistent in code.
+skills:
+  - design-system
+  - design-handoff
+  - menu-design
+  - landing-page
 ---
 
 # ROLE: FRONTEND

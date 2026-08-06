@@ -24,8 +24,7 @@
 - [x] T010 Frontmatter sanity check on all seven assets (`name`,
   `description` parse).
 - [x] T011 `pnpm run preflight` green in the worktree.
-- [x] T012 Open PR; Codex review is green on the current implementation and all
-  blocking findings have been addressed.
+- [ ] T012 Open PR; record final current-head review outcome.
 
 ## Verification Evidence
 
@@ -60,6 +59,10 @@
   files, PR lifecycle, and `pnpm run install:claude` symlink mapping.
 - Codex follow-up review (2026-08-06, `8a80f74`) reported no new findings;
   the head-bound `AI Review` workflow completed successfully.
+- Codex follow-up review (2026-08-06, `f72eb6c`) found one P2 runtime gap:
+  Claude Code subagents did not preload the skills named only in prose/factory
+  metadata. Both role frontmatters now declare their appropriate `skills` lists,
+  with regression coverage for the exact preload set.
 
 ## Process Memory
 

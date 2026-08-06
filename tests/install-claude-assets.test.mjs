@@ -23,6 +23,21 @@ const DESIGN_SKILLS = [
   "menu-design",
   "landing-page"
 ];
+const ROLE_SKILLS = {
+  "ui-ux-designer": [
+    "design-system",
+    "design-handoff",
+    "design-review",
+    "menu-design",
+    "landing-page"
+  ],
+  frontend: [
+    "design-system",
+    "design-handoff",
+    "menu-design",
+    "landing-page"
+  ]
+};
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -163,5 +178,23 @@ test("design skill descriptions use YAML-safe block scalars", () => {
       `${id} description must use a folded block scalar`
     );
     assert.match(frontmatter[1], /Triggers:/);
+  }
+});
+
+test("design roles preload their required Claude Code skills", () => {
+  for (const [id, expectedSkills] of Object.entries(ROLE_SKILLS)) {
+    const contents = readFileSync(
+      new URL(`../agents/${id}/agent.md`, import.meta.url),
+      "utf8"
+    );
+    const frontmatter = contents.match(/^---\n([\s\S]*?)\n---\n/);
+    assert.ok(frontmatter, `${id} must have YAML frontmatter`);
+    const skillsBlock = frontmatter[1].match(/^skills:\n((?:  - .+\n?)+)/m);
+    assert.ok(skillsBlock, `${id} must declare preloaded skills`);
+    const actualSkills = skillsBlock[1]
+      .trim()
+      .split("\n")
+      .map((line) => line.replace(/^\s*-\s+/, ""));
+    assert.deepEqual(actualSkills, expectedSkills);
   }
 });

@@ -13,7 +13,8 @@ In scope:
 
 - Role contracts `agents/ui-ux-designer/agent.md` and `agents/frontend/agent.md`
   migrated from `~/.claude/agents`, in a dual format: Claude Code frontmatter on
-  top, factory contract block in the body, safety rules inline.
+  top (including their preloaded skill lists), factory contract block in the
+  body, safety rules inline.
 - Skills `design-system`, `design-review`, `design-handoff` migrated from
   `~/.claude/skills` with a factory contract block added.
 - New skill `menu-design`: restaurant/cafe/bar menu design methodology (pure

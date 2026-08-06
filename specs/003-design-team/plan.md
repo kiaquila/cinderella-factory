@@ -16,7 +16,9 @@ Adopt the three-layer contract model already used by this factory (constitution
 - **Dual-format contract files.** Claude Code requires YAML frontmatter
   (`name`, `description`) as the first bytes of an agent/skill file; the factory
   convention keeps its contract YAML in a fenced block in the body. Both coexist
-  in one file, so no generator or duplicate files are needed.
+  in one file, so no generator or duplicate files are needed. Role frontmatter
+  also declares `skills` so Claude Code injects the required playbooks into each
+  subagent at startup.
 - **`runtime: claude-code-subagent` / `claude-code-skill` field.** New contract
   field with a current reason: it distinguishes these assets from
   orchestrator-runtime agents (`mila` etc.) and tells the installer and future
