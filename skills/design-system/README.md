@@ -1,18 +1,19 @@
 # Design & Frontend Kit
 
-A portable, cross-project kit for building **consistent** UI. Distilled from Vanya's
-3-layer model (constitution / roles / skills) and mapped onto Claude Code's native
-primitives, with one addition he didn't need: **it adapts to whatever design system a
-project already has** (none / partial / complete / inconsistent) instead of assuming
-there's no system yet.
+A versioned, cross-project kit for building **consistent** UI. Cinderella Factory is
+its canonical source; `pnpm run install:claude` exposes the role and skill contracts to
+Claude Code through symlinks. The kit is distilled from Vanya's 3-layer model
+(constitution / roles / skills), with one addition he didn't need: **it adapts to
+whatever design system a project already has** (none / partial / complete /
+inconsistent) instead of assuming there's no system yet.
 
 ## The layers (who answers what)
 
 | Layer | Question it answers | Lives in |
 |---|---|---|
 | **Constitution** | "How do we work here? What can't break?" | each project's `CLAUDE.md` / `AGENTS.md` |
-| **Roles** (agents) | "Who am I, what do I own, where are my boundaries?" | `~/.claude/agents/ui-ux-designer.md`, `frontend.md` |
-| **Skills** (playbooks) | "How do I do this type of task?" | `~/.claude/skills/design-system`, `design-handoff`, `design-review` |
+| **Roles** (agents) | "Who am I, what do I own, where are my boundaries?" | factory `agents/`; symlinked into `~/.claude/agents/` |
+| **Skills** (playbooks) | "How do I do this type of task?" | factory `skills/`; symlinked into `~/.claude/skills/` |
 | **Project design system** | "What does *this* product's system actually contain?" | each repo's `design-system.md` (from `templates/project-design-system.md`) |
 | **Runtime agents** | the actual executors | Claude Code sessions that read role + skills |
 
@@ -32,10 +33,14 @@ design-review: review the LIVE screen  →  polish
 The `design-system` skill's Step 0 (reconnaissance) runs first every time and decides
 whether you're bootstrapping, filling gaps, strictly reusing, or reconciling drift.
 
-## Reuse across projects (capsule-zero, and every project after)
+## Repository-owned lifecycle and cross-project reuse
 
-- The **skills** and **agents** live in `~/.claude/` → they are available in **every**
-  project automatically, no per-project install.
+- The **skills** and **agents** are owned and reviewed in Cinderella Factory. After a
+  change merges, run `pnpm run install:claude` from the primary checkout to create or
+  refresh their `~/.claude` symlinks. Do not copy or edit the installed paths; change
+  the factory contracts through a PR so there is one source of truth.
+- Once installed, the symlinked roles and skills are available in **every** project;
+  no per-project role or skill copy is needed.
 - The **only per-project file** is `design-system.md` (copied from the template and
   filled in from the code). That's what makes the same portable skills behave correctly
   in a project with a full design system vs one with none.
@@ -44,10 +49,6 @@ whether you're bootstrapping, filling gaps, strictly reusing, or reconciling dri
   path in that project's `CLAUDE.md`. The `design-system` skill searches a fixed order
   (root → `docs_project/**` → `docs/` → `.specify/memory/` → `.claude/`) and reuses the
   first hit instead of re-bootstrapping.
-- **Promotion path (optional):** if you later want these versioned and PR-reviewed (as
-  Vanya keeps his `agents/*.md` repo-owned), copy `skills/design-*` and
-  `agents/{ui-ux-designer,frontend}.md` into a repo or an OMC-style plugin and
-  install from there. Global-first gets value today; promote when you want review gates.
 
 ## Activate it in a project (wire the constitution layer)
 
@@ -72,9 +73,12 @@ ships the wording so you don't have to):
 
 That one block turns the installed-but-dormant kit into the active workflow for that repo.
 
-## Files
-- `~/.claude/agents/ui-ux-designer.md`
-- `~/.claude/agents/frontend.md`
-- `~/.claude/skills/design-system/SKILL.md` (+ `templates/project-design-system.md`)
-- `~/.claude/skills/design-handoff/SKILL.md`
-- `~/.claude/skills/design-review/SKILL.md`
+## Canonical files and installed links
+
+- `agents/ui-ux-designer/agent.md` → `~/.claude/agents/ui-ux-designer.md`
+- `agents/frontend/agent.md` → `~/.claude/agents/frontend.md`
+- `skills/design-system/` → `~/.claude/skills/design-system/`
+- `skills/design-handoff/` → `~/.claude/skills/design-handoff/`
+- `skills/design-review/` → `~/.claude/skills/design-review/`
+- `skills/menu-design/` → `~/.claude/skills/menu-design/`
+- `skills/landing-page/` → `~/.claude/skills/landing-page/`

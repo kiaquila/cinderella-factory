@@ -53,6 +53,10 @@
   integration tests cover both behaviors.
 - `pnpm run preflight` after the third review fixes: all gates passed and 11/11
   node tests are green.
+- Codex follow-up review (2026-08-06, `d6ba399`) found one P2 documentation
+  drift: `skills/design-system/README.md` still described global-first copies
+  and optional future promotion. It now documents the factory-owned canonical
+  files, PR lifecycle, and `pnpm run install:claude` symlink mapping.
 
 ## Process Memory
 
