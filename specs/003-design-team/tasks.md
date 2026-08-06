@@ -24,7 +24,8 @@
 - [x] T010 Frontmatter sanity check on all seven assets (`name`,
   `description` parse).
 - [x] T011 `pnpm run preflight` green in the worktree.
-- [ ] T012 Open PR; record review outcome.
+- [x] T012 Open PR; Codex review is green on the current implementation and all
+  blocking findings have been addressed.
 
 ## Verification Evidence
 
@@ -57,6 +58,8 @@
   drift: `skills/design-system/README.md` still described global-first copies
   and optional future promotion. It now documents the factory-owned canonical
   files, PR lifecycle, and `pnpm run install:claude` symlink mapping.
+- Codex follow-up review (2026-08-06, `8a80f74`) reported no new findings;
+  the head-bound `AI Review` workflow completed successfully.
 
 ## Process Memory
 
