@@ -29,8 +29,8 @@ Adopt the three-layer contract model already used by this factory (constitution
   deliberate and recorded here.
 - **Symlinks, not copies.** Copies drift; the whole point of the migration is a
   single reviewable source. Backup-then-link keeps the installer non-destructive;
-  numeric backup suffixes preserve earlier backups when the canonical name is
-  already occupied.
+  `lstat`-checked numeric backup suffixes preserve earlier backups, including
+  dangling symlinks, when the canonical name is already occupied.
 - **No mila/salesman/pediatrician installation.** Different runtime; out of
   scope by contract.
 

@@ -29,6 +29,15 @@ const DESIGN_SKILLS = [
   "landing-page"
 ];
 
+function lstatOrNull(path) {
+  try {
+    return lstatSync(path);
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
 if (repoRoot.includes(join(".claude", "worktrees"))) {
   console.warn(
     "WARNING: running from a temporary worktree; symlinks would dangle after cleanup.\n" +
@@ -54,12 +63,7 @@ for (const { linkPath, target } of links) {
     console.error(`SKIP (missing target): ${target}`);
     continue;
   }
-  let current = null;
-  try {
-    current = lstatSync(linkPath);
-  } catch {
-    current = null;
-  }
+  const current = lstatOrNull(linkPath);
   if (current?.isSymbolicLink()) {
     if (readlinkSync(linkPath) === target) {
       console.log(`ok      ${linkPath}`);
@@ -71,7 +75,7 @@ for (const { linkPath, target } of links) {
     const backupBase = `${linkPath}.pre-factory-backup`;
     let backup = backupBase;
     let suffix = 1;
-    while (existsSync(backup)) {
+    while (lstatOrNull(backup)) {
       backup = `${backupBase}.${suffix}`;
       suffix += 1;
     }

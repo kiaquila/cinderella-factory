@@ -42,6 +42,10 @@
 - `pnpm run preflight` (2026-08-06): feature-memory and syntax gates passed;
   10/10 node tests pass, including YAML-safe frontmatter and backup-collision
   regressions.
+- Codex follow-up review (2026-08-06, `9b373ca`) found one P2 edge case:
+  `existsSync` misses dangling symlinks in backup slots. Backup selection now
+  uses `lstat`, and the collision test covers both regular files and dangling
+  symlinks.
 
 ## Process Memory
 
@@ -57,8 +61,9 @@
   `~/.claude` symlinks can never point into a temporary worktree.
 - Skill descriptions use folded YAML block scalars so trigger phrases may safely
   contain `: ` without breaking Claude frontmatter parsing.
-- If the canonical `.pre-factory-backup` already exists, the installer selects
-  the first free numeric suffix (`.1`, `.2`, ...) instead of overwriting it.
+- If the canonical `.pre-factory-backup` already exists, the installer uses
+  `lstat` to select the first truly unoccupied numeric suffix (`.1`, `.2`, ...)
+  instead of overwriting a file, directory, or dangling symlink.
 
 ### Known Issues
 

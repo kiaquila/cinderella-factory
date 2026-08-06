@@ -8,6 +8,7 @@ import {
   readlinkSync,
   realpathSync,
   rmSync,
+  symlinkSync,
   writeFileSync
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -23,7 +24,7 @@ const DESIGN_SKILLS = [
   "landing-page"
 ];
 
-test("installer preserves an existing backup by selecting a numbered suffix", () => {
+test("installer preserves occupied backup paths, including dangling symlinks", () => {
   const fixtureRoot = mkdtempSync(join(tmpdir(), "cinderella-installer-"));
   try {
     const scriptPath = join(fixtureRoot, "scripts", "install-claude-assets.mjs");
@@ -49,6 +50,10 @@ test("installer preserves an existing backup by selecting a numbered suffix", ()
     mkdirSync(dirname(linkPath), { recursive: true });
     writeFileSync(linkPath, "replacement\n");
     writeFileSync(`${linkPath}.pre-factory-backup`, "original backup\n");
+    symlinkSync(
+      "missing-target",
+      `${linkPath}.pre-factory-backup.1`
+    );
 
     const result = spawnSync(process.execPath, [scriptPath], {
       encoding: "utf8",
@@ -61,7 +66,11 @@ test("installer preserves an existing backup by selecting a numbered suffix", ()
       "original backup\n"
     );
     assert.equal(
-      readFileSync(`${linkPath}.pre-factory-backup.1`, "utf8"),
+      readlinkSync(`${linkPath}.pre-factory-backup.1`),
+      "missing-target"
+    );
+    assert.equal(
+      readFileSync(`${linkPath}.pre-factory-backup.2`, "utf8"),
       "replacement\n"
     );
     assert.equal(
