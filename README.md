@@ -56,6 +56,13 @@ pnpm run pr:publish
 pnpm run install:claude   # symlink design-team roles/skills into ~/.claude
 ```
 
+`install:claude` never deletes anything it finds: an existing file, directory,
+or foreign symlink at a link path is moved to
+`~/.claude/.pre-factory-backups/<agents|skills>/<name>` first. Backups live in
+that dot-directory rather than beside the original because Claude Code loads
+every `~/.claude/skills/*/SKILL.md`, and an in-place backup would register as a
+duplicate skill.
+
 ## Required PR Checks
 
 The active list is `.unicorn-hub/config.json` (`requiredChecks`):
