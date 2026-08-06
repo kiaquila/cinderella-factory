@@ -20,7 +20,8 @@
 
 - [x] T008 `node --test tests/install-claude-assets.test.mjs` — 5/5 pass.
 - [x] T009 `pnpm run preflight` green in the worktree.
-- [ ] T010 Open PR; record review outcome.
+- [x] T010 Open PR; Codex review on `8611b74d4b0ccb34097e1eb7eac099ffe8c37a16`
+  found no major issues (2026-08-06).
 
 ## Verification Evidence
 
@@ -30,6 +31,8 @@
 - `pnpm run preflight` (2026-08-06): feature-memory gate passed via
   `specs/004-installer-backup-location/{spec,plan,tasks}.md`; script syntax
   checks clean; 13/13 tests pass.
+- Codex review (2026-08-06) of `8611b74d4b0ccb34097e1eb7eac099ffe8c37a16`:
+  no major issues found.
 
 ## Process Memory
 
