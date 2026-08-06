@@ -2,6 +2,9 @@
 // Symlinks design-team roles and skills into ~/.claude so Claude Code loads
 // them globally while this repository stays the single source of truth.
 // Idempotent. Existing real files/dirs are backed up, never deleted.
+// Backups go to ~/.claude/.pre-factory-backups/, never beside the original:
+// Claude Code registers every ~/.claude/skills/*/SKILL.md it finds, so a backup
+// kept in place would load as a duplicate skill.
 // Usage: node scripts/install-claude-assets.mjs [--dry-run]
 import {
   existsSync,
@@ -12,12 +15,13 @@ import {
   symlinkSync
 } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const claudeDir = process.env.CLAUDE_CONFIG_DIR || join(homedir(), ".claude");
+const backupRoot = join(claudeDir, ".pre-factory-backups");
 const dryRun = process.argv.includes("--dry-run");
 
 const DESIGN_AGENTS = ["ui-ux-designer", "frontend"];
@@ -47,7 +51,7 @@ function gitMetadataPath(argument) {
 }
 
 function nextBackupPath(linkPath) {
-  const backupBase = `${linkPath}.pre-factory-backup`;
+  const backupBase = join(backupRoot, relative(claudeDir, linkPath));
   let backup = backupBase;
   let suffix = 1;
   while (lstatOrNull(backup)) {
@@ -95,7 +99,10 @@ for (const { linkPath, target } of links) {
   if (current) {
     const backup = nextBackupPath(linkPath);
     console.log(`backup  ${linkPath} -> ${backup}`);
-    if (!dryRun) renameSync(linkPath, backup);
+    if (!dryRun) {
+      mkdirSync(dirname(backup), { recursive: true });
+      renameSync(linkPath, backup);
+    }
   }
   console.log(`${current?.isSymbolicLink() ? "relink" : "link  "}  ${linkPath} -> ${target}`);
   if (!dryRun) {
