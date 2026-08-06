@@ -30,7 +30,11 @@ Adopt the three-layer contract model already used by this factory (constitution
 - **Symlinks, not copies.** Copies drift; the whole point of the migration is a
   single reviewable source. Backup-then-link keeps the installer non-destructive;
   `lstat`-checked numeric backup suffixes preserve earlier backups, including
-  dangling symlinks, when the canonical name is already occupied.
+  dangling symlinks, when the canonical name is already occupied. Non-matching
+  destination symlinks take the same backup path instead of being unlinked.
+- **Git-metadata worktree detection.** The installer compares `--git-dir` with
+  `--git-common-dir`, so linked worktrees are refused regardless of their folder
+  naming convention.
 - **No mila/salesman/pediatrician installation.** Different runtime; out of
   scope by contract.
 

@@ -9,12 +9,12 @@ import {
   mkdirSync,
   readlinkSync,
   renameSync,
-  symlinkSync,
-  unlinkSync
+  symlinkSync
 } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const claudeDir = process.env.CLAUDE_CONFIG_DIR || join(homedir(), ".claude");
@@ -38,9 +38,31 @@ function lstatOrNull(path) {
   }
 }
 
-if (repoRoot.includes(join(".claude", "worktrees"))) {
+function gitMetadataPath(argument) {
+  const output = execFileSync("git", ["rev-parse", argument], {
+    cwd: repoRoot,
+    encoding: "utf8"
+  }).trim();
+  return resolve(repoRoot, output);
+}
+
+function nextBackupPath(linkPath) {
+  const backupBase = `${linkPath}.pre-factory-backup`;
+  let backup = backupBase;
+  let suffix = 1;
+  while (lstatOrNull(backup)) {
+    backup = `${backupBase}.${suffix}`;
+    suffix += 1;
+  }
+  return backup;
+}
+
+const isLinkedWorktree =
+  gitMetadataPath("--git-dir") !== gitMetadataPath("--git-common-dir");
+
+if (isLinkedWorktree) {
   console.warn(
-    "WARNING: running from a temporary worktree; symlinks would dangle after cleanup.\n" +
+    "WARNING: running from a linked worktree; symlinks would dangle after cleanup.\n" +
       "Run from the main checkout after merge instead."
   );
   if (!dryRun) process.exit(1);
@@ -69,22 +91,13 @@ for (const { linkPath, target } of links) {
       console.log(`ok      ${linkPath}`);
       continue;
     }
-    console.log(`relink  ${linkPath} -> ${target}`);
-    if (!dryRun) unlinkSync(linkPath);
-  } else if (current) {
-    const backupBase = `${linkPath}.pre-factory-backup`;
-    let backup = backupBase;
-    let suffix = 1;
-    while (lstatOrNull(backup)) {
-      backup = `${backupBase}.${suffix}`;
-      suffix += 1;
-    }
+  }
+  if (current) {
+    const backup = nextBackupPath(linkPath);
     console.log(`backup  ${linkPath} -> ${backup}`);
     if (!dryRun) renameSync(linkPath, backup);
-    console.log(`link    ${linkPath} -> ${target}`);
-  } else {
-    console.log(`link    ${linkPath} -> ${target}`);
   }
+  console.log(`${current?.isSymbolicLink() ? "relink" : "link  "}  ${linkPath} -> ${target}`);
   if (!dryRun) {
     mkdirSync(dirname(linkPath), { recursive: true });
     symlinkSync(target, linkPath);

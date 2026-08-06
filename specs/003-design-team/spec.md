@@ -60,14 +60,14 @@ the repo.
 2. `menu-design` and `landing-page` contain methodology only — no invented
    business facts, and both enforce the source-truth rule explicitly.
 3. `node scripts/install-claude-assets.mjs --dry-run` prints a correct plan and
-   exits 0 from a main checkout; it refuses a non-dry run from a temporary
-   worktree.
+   exits 0 from a main checkout; it refuses a non-dry run from any linked Git
+   worktree regardless of its path.
 4. `pnpm run preflight` passes in the worktree.
 
 ## Negative Scenario
 
 The installer must never delete or silently overwrite a user's existing
-`~/.claude` files: a real file/dir at a link path is renamed to
+`~/.claude` files: any file, directory, or non-matching symlink at a link path is renamed to
 `<name>.pre-factory-backup` first. If that backup name is already occupied, the
 installer preserves it (including a dangling symlink) and selects the first free
 numeric suffix. Running twice without user changes is a no-op (`ok` lines only).

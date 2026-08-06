@@ -46,6 +46,13 @@
   `existsSync` misses dangling symlinks in backup slots. Backup selection now
   uses `lstat`, and the collision test covers both regular files and dangling
   symlinks.
+- Codex follow-up review (2026-08-06, `6e005fc`) found two P2 gaps: worktree
+  detection depended on a `.claude/worktrees` pathname, and non-matching
+  destination symlinks were unlinked without backup. The installer now detects
+  linked worktrees from Git metadata and backs up every non-matching destination;
+  integration tests cover both behaviors.
+- `pnpm run preflight` after the third review fixes: all gates passed and 11/11
+  node tests are green.
 
 ## Process Memory
 
@@ -57,8 +64,8 @@
 
 - Inline safety sections instead of per-role `safety.md` (see plan.md) so the
   contract survives being loaded standalone by the Claude Code runtime.
-- Installer intentionally refuses non-dry runs from `.claude/worktrees/*` so
-  `~/.claude` symlinks can never point into a temporary worktree.
+- Installer compares Git's per-checkout directory with its common directory to
+  refuse non-dry runs from any linked worktree, independent of pathname.
 - Skill descriptions use folded YAML block scalars so trigger phrases may safely
   contain `: ` without breaking Claude frontmatter parsing.
 - If the canonical `.pre-factory-backup` already exists, the installer uses
