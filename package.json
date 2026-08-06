@@ -16,6 +16,7 @@
     "preflight": "pnpm run check:repo && pnpm run check:feature-memory && pnpm run check:feature-memory:worktree && pnpm run check:syntax && pnpm run test",
     "agent:set": "node scripts/set-implementation-agent.mjs",
     "worktree:new": "node scripts/new-worktree.mjs",
+    "install:claude": "node scripts/install-claude-assets.mjs",
     "pr:publish": "node scripts/publish-branch.mjs",
     "review:switch": "node scripts/switch-review-agent.mjs"
   }

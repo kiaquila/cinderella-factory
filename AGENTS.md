@@ -18,6 +18,12 @@ Planned starter agents:
 - `salesman`: marketplace listing and negotiation helper for the seller.
 - `pediatrician`: educational child-health triage support, not a doctor.
 
+Design-team domain (Claude Code runtime): the `ui-ux-designer` and `frontend`
+role contracts plus the `design-system`, `design-review`, `design-handoff`,
+`menu-design`, and `landing-page` skills live here as versioned contracts and
+are installed into `~/.claude` via `pnpm run install:claude` (see
+`agents/README.md` and `skills/README.md`).
+
 ## Read Order
 
 Before implementation work, read in this order:
