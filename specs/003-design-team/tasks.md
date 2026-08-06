@@ -24,7 +24,7 @@
 - [x] T010 Frontmatter sanity check on all seven assets (`name`,
   `description` parse).
 - [x] T011 `pnpm run preflight` green in the worktree.
-- [ ] T012 Open PR; record final current-head review outcome.
+- [x] T012 Open PR; record final current-head review outcome.
 
 ## Verification Evidence
 
@@ -68,6 +68,8 @@
   twelfth test had not been recorded here.
 - `pnpm run preflight` after the role preload fix: all gates passed and 12/12
   node tests are green, including the exact role skill-preload assertions.
+- Codex follow-up review (2026-08-06, `7026aa7`) reported no new findings;
+  the head-bound `AI Review` workflow completed successfully.
 
 ## Process Memory
 
