@@ -152,8 +152,8 @@ function exactKeys(value, keys) {
 
 function structuredCodexResult(body, headSha) {
   const match = body.match(/^<!-- codex-pull-request-review-summary -->\s*<!-- codex-review-state:v1 (\{[^\n]*\}) -->\s*## Codex Review Summary(?:\n|$)/);
-  if (!match || (body.match(/codex-pull-request-review-summary/g) || []).length !== 1 ||
-      (body.match(/codex-review-state:/g) || []).length !== 1 || body.includes("codex-review-receipt:")) return null;
+  if (!match || (body.match(/codex-pull-request-review-summary/gi) || []).length !== 1 ||
+      (body.match(/codex-review-state:/gi) || []).length !== 1 || /codex-review-receipt:/i.test(body)) return null;
   const raw = match[1];
   // The closed schema has no escaped strings. Counting keys before JSON.parse
   // also rejects duplicate properties, which JSON.parse would silently replace.
@@ -185,7 +185,10 @@ function structuredCodexResult(body, headSha) {
   const commit = rows[0].match(/`([a-f0-9]{7,40})`/g);
   if (commit?.length !== 1 || !headSha.startsWith(commit[0].slice(1, -1))) return null;
   if (/\b(?:P[0-2]|pending|failed|cancelled|in progress)\b/i.test(visible)) return null;
-  return { sha: headSha, result: review.has_any_findings || review.has_unresolved_findings ? "fail" : "pass" };
+  if (review.has_unresolved_findings) return { sha: headSha, result: "fail" };
+  // Resolved findings alone do not establish severity. A formal P3 review can
+  // still pass once its threads are resolved; this summary cannot grant a pass.
+  return { sha: headSha, result: review.has_any_findings ? "pending" : "pass" };
 }
 
 export function hasBlockingCodexStructuredSummary(comment, headSha, config = {}) {
@@ -198,6 +201,7 @@ export function classifyCodexSummaryComment(comment, headSha, requestMarker = nu
       !isTrustedReviewLogin(comment?.user?.login, "codex", config)) return null;
   let body = String(comment?.body || "").trim();
   if (!isCodexReviewSignal(body)) return null;
+  if (containsBlockingSeverity(body, "codex")) return "fail";
   if (!requestMarker || requestMarker.agent !== "codex" || requestMarker.sha !== headSha) return null;
   const requestedAt = Date.parse(requestMarker.sourceCommentCreatedAt || requestMarker.requestedAt || requestMarker.commentCreatedAt || "");
   const evidenceAt = Date.parse(codexCommentTimestamp(comment));
@@ -215,7 +219,7 @@ export function classifyCodexSummaryComment(comment, headSha, requestMarker = nu
   if (/codex-(?:review-(?:receipt|state):|pull-request-review-summary)/i.test(body)) return "pending";
   body = withoutCodexAboutDetails(body);
   const match = body.match(/^Codex Review: Did(?:\s+not|\s*n['’]?t) find any major issues\.([^\n]*)(?:\n+\*\*Reviewed commit:\*\* `([a-f0-9]{10,40})`)?$/i);
-  if (!match || /\b(?:P[0-3]|findings?|issues?|pending|failed|blocked|not|unresolved)\b/i.test(match[1])) return "pending";
+  if (!match || /\b(?:P[0-3]|findings?|issues?|pending|failed|blocked|not|unresolved|commit|sha|reviewed)\b/i.test(match[1]) || match[1].includes("`")) return "pending";
   if (match[2] && !headSha.startsWith(match[2])) return null;
   // Receipt format always names the reviewed commit. Legacy format retains
   // timestamp + timeline binding when no commit was included by the backend.

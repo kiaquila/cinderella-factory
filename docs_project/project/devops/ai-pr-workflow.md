@@ -48,7 +48,8 @@ When trusted bot review evidence arrives after a pull-request-triggered
 current-head pull request run instead of requiring another human command.
 Receipt and structured-summary comments wake the gate on both creation and edit.
 Runtime routing verifies the selected trusted identity; a wakeup is never itself
-positive review evidence. Active gates continue polling. A failed completion
+positive review evidence. New evidence after a completed success also causes
+reevaluation, so a previous pass cannot hide later findings. Active gates continue polling. A failed completion
 also checks for evidence newer than that attempt's start, covering arrival after
 the final poll. Requeue is serialized per PR and never repeats an attempt started
 after the same evidence. The router refreshes and rechecks the actual PR head

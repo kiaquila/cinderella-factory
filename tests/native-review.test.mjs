@@ -8,7 +8,7 @@ import {
   classifyCodexSummaryComment, latestCodexSummaryResult,
   classifyCodexNativeReview, createAiReviewRequestMarkerBody
 } from '../scripts/ai-review-helpers.mjs';
-import { shouldRouteAiReviewRerunEvent, rerunAiReviewForPrHead, resolvePullContext } from '../scripts/ai-review-rerun.mjs';
+import { shouldRouteAiReviewRerunEvent, rerunAiReviewForPrHead, resolvePullContext, selectAiReviewRun } from '../scripts/ai-review-rerun.mjs';
 
 const head = '2667f79cd7676ff331730cabf661d38dbbcddb0d';
 const old = 'a1fd451dbda91c92f33e931d32f37db34a9f665d';
@@ -43,6 +43,8 @@ test('receipt rejects stale, absent, ambiguous, malformed and conflicting commit
     receipt.replace(' :rocket:', ' But P1 is unresolved.'),
     receipt.replace("Didn't find any major issues.", 'Found P2 issues.'),
     receipt + '\nReview pending.',
+    legacy + '\n\n<details> <summary>ℹ️ About Codex in GitHub</summary>P1: unresolved</details>',
+    "Codex Review: Didn't find any major issues. Reviewed commit `" + old + '`',
     receipt.replace('2667f79cd7', '2667f79'),
     receipt.replace('**Reviewed commit:**', '**Reviewed commit:** malformed'),
     legacy.replace('2667f79cd7', 'a1fd451dbd')
@@ -82,7 +84,7 @@ test('latest evidence and head timeline prevent old positives from hiding newer 
   const positive = comment(receipt);
   const later = comment(summary({ ...code, status: 'pending' }), { updated_at: '2026-10-15T21:50:00Z' });
   assert.equal(latestCodexSummaryResult([positive, later], head, marker), 'pending');
-  assert.equal(latestCodexSummaryResult([positive, comment(summary({ ...code, has_any_findings: true }))], head, marker), 'fail');
+  assert.equal(latestCodexSummaryResult([positive, comment(summary({ ...code, has_any_findings: true, has_unresolved_findings:true }))], head, marker), 'fail');
   assert.equal(latestCodexSummaryResult([positive], head, marker, [{ event: 'head_ref_force_pushed', created_at: '2026-10-15T21:48:00Z' }]), 'pending');
   assert.equal(latestCodexSummaryResult([positive], head, marker, [{ event: 'committed', created_at: '2026-10-15T21:48:00Z' }]), 'pending');
 });
@@ -90,6 +92,7 @@ test('latest evidence and head timeline prevent old positives from hiding newer 
 test('native formal reviews require exact commit and preserve P2/P3 policy', () => {
   const review = { id: 1, commit_id: head, state: 'COMMENTED', user: { login: 'chatgpt-codex-connector[bot]' } };
   assert.equal(classifyCodexNativeReview(review, [], head), 'pass');
+  assert.equal(classifyCodexNativeReview({...review,state:'APPROVED'}, [{pull_request_review_id:1,user:review.user,body:'P2'}],head),'fail');
   assert.equal(classifyCodexNativeReview({ ...review, commit_id: undefined }, [], head), null);
   assert.equal(classifyCodexNativeReview({ ...review, commit_id: old }, [], head), null);
   for (const [priority, outcome] of [['P2', 'fail'], ['P3', 'pass'], ['Unknown', 'fail']]) {
@@ -152,7 +155,8 @@ function runScript(script, scenario = {}) {
         else if(path.endsWith('/check-runs')) data={id:123};
         else if(path.endsWith('/runs')) data={workflow_runs:[{id:42,event:'pull_request',head_sha:f.head,status:f.runStatus||'completed',conclusion:'failure',created_at:'2026-10-15T21:44:00Z',run_started_at:f.runStarted||'2026-10-15T21:44:00Z'}]};
         else if(path.endsWith('/rerun')) data={};
-        else if(path.endsWith('/timeline')||path.endsWith('/pulls/8/comments')) data=[];
+        else if(path.endsWith('/pulls/8/comments')) data=f.reviewComments||[];
+        else if(path.endsWith('/timeline')) data=[];
         else throw new Error('Unexpected request '+path);
         return new Response(JSON.stringify(data),{status:200});
       };`);
@@ -162,7 +166,7 @@ function runScript(script, scenario = {}) {
 }
 
 test('production gate accepts receipt, legacy, edited structured summary and native evidence', () => {
-  for (const scenario of [ {}, { comments: [comment(legacy)] }, { comments: [comment(summary(), { created_at: '2026-10-01T00:00:00Z', updated_at: evidenceAt })] }, { comments: [], reviews: [{ id: 1, commit_id: head, state: 'APPROVED', submitted_at: evidenceAt, user: { login: 'chatgpt-codex-connector[bot]' } }] } ]) {
+  for (const scenario of [ {}, { comments: [comment(legacy)] }, { comments: [comment(summary(), { created_at: '2026-10-01T00:00:00Z', updated_at: evidenceAt })] }, { comments: [comment(summary({...code,has_any_findings:true}))], reviews: [{ id: 1, commit_id: head, state: 'COMMENTED', submitted_at:evidenceAt, user:{login:'chatgpt-codex-connector[bot]'} }], reviewComments:[{pull_request_review_id:1,user:{login:'chatgpt-codex-connector[bot]'},body:'P3 advisory'}] }, { comments: [], reviews: [{ id: 1, commit_id: head, state: 'APPROVED', submitted_at: evidenceAt, user: { login: 'chatgpt-codex-connector[bot]' } }] } ]) {
     const result = runScript('ai-review-gate', scenario);
     assert.equal(result.status, 0, result.stderr + result.stdout);
     assert.match(result.stdout, /gate passed/);
@@ -170,7 +174,7 @@ test('production gate accepts receipt, legacy, edited structured summary and nat
 });
 
 test('production gate fails for findings before a fresh marker, unresolved threads and a push during fetch', () => {
-  for (const scenario of [ { unresolved: true }, { stale: true }, { comments: [comment(summary({ ...code, has_any_findings: true }), { created_at: '2026-10-15T21:40:00Z' }), comment(receipt)] }, { reviews: [{ id: 1, commit_id: head, state: 'COMMENTED', body: '[P2] Existing finding', submitted_at: '2026-10-15T21:40:00Z', user: { login: 'chatgpt-codex-connector[bot]' } }] }, { comments: [comment(receipt.replace('2667f79cd7','a1fd451dbd'))] }, { comments: [comment(summary({ ...code, has_any_findings: true }))] } ]) {
+  for (const scenario of [ { unresolved: true }, { stale: true }, { comments: [comment(summary({ ...code, has_any_findings: true, has_unresolved_findings:true }), { created_at: '2026-10-15T21:40:00Z' }), comment(receipt)] }, { reviews: [{ id: 1, commit_id: head, state: 'COMMENTED', body: '[P2] Existing finding', submitted_at: '2026-10-15T21:40:00Z', user: { login: 'chatgpt-codex-connector[bot]' } }] }, { comments: [comment(receipt.replace('2667f79cd7','a1fd451dbd'))] }, { comments: [comment(summary({ ...code, has_any_findings: true }))] } ]) {
     const result = runScript('ai-review-gate', scenario);
     assert.notEqual(result.status, 0, result.stdout);
     assert.doesNotMatch(result.stdout, /gate passed/);
@@ -206,4 +210,12 @@ test('production context resolver keeps the webhook head when a push races conte
   const result = runScript('resolve-pr-context', { event: { pull_request: { number: 8, head: { sha: old } } }, env: { AI_REVIEW_HEAD_SHA: '' } });
   assert.equal(result.status, 0, result.stderr);
   assert.ok(result.outputs.split('\n').includes('head_sha=' + old));
+});
+
+
+test('new evidence after a completed success is reevaluated without rerunning consumed evidence', () => {
+  const run = { id: 42, event:'pull_request',head_sha:head,status:'completed',conclusion:'success',created_at:requestedAt,updated_at:evidenceAt };
+  assert.equal(selectAiReviewRun([run],head,'2026-10-15T21:50:00Z').action,'rerun');
+  assert.equal(selectAiReviewRun([run],head,evidenceAt).action,'already_success');
+  assert.equal(selectAiReviewRun([run],head,requestedAt).action,'already_success');
 });

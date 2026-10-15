@@ -42,7 +42,7 @@ export function shouldRouteAiReviewRerunEvent(event, selectedAgent = "codex", co
   return false;
 }
 
-export function selectAiReviewRun(runs = [], headSha) {
+export function selectAiReviewRun(runs = [], headSha, evidenceAt) {
   const matchingRuns = runs
     .filter((run) => run.event === "pull_request" && run.head_sha === headSha)
     .sort((left, right) => Date.parse(right.created_at || "") - Date.parse(left.created_at || ""));
@@ -54,7 +54,9 @@ export function selectAiReviewRun(runs = [], headSha) {
 
   const latestCompletedRun = matchingRuns.find((run) => run.status === "completed");
   if (latestCompletedRun?.conclusion === "success") {
-    return { action: "already_success", run: latestCompletedRun };
+    const completedAt = latestCompletedRun.updated_at || latestCompletedRun.run_started_at || latestCompletedRun.created_at;
+    const action = Date.parse(evidenceAt || "") > Date.parse(completedAt || "") ? "rerun" : "already_success";
+    return { action, run: latestCompletedRun };
   }
   if (latestCompletedRun && rerunnableConclusions.has(latestCompletedRun.conclusion)) {
     return { action: "rerun", run: latestCompletedRun };
@@ -114,7 +116,7 @@ export async function rerunAiReviewForPrHead({
     repository,
     `/repos/${owner}/${repo}/actions/workflows/ai-review.yml/runs?event=pull_request&head_sha=${encodeURIComponent(headSha)}`
   );
-  const selected = selectAiReviewRun(runs, headSha);
+  const selected = selectAiReviewRun(runs, headSha, evidenceAt);
 
   if (prNumber) {
     const pull = await request(token, repository, `/repos/${owner}/${repo}/pulls/${prNumber}`);

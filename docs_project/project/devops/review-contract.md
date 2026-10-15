@@ -37,7 +37,8 @@ dominating ties. A commit or force-push between the request and evidence rejects
 that comment.
 
 Request freshness never filters out current-head blocking native findings or
-negative structured verdicts. All unresolved review threads keep the gate red,
+structured verdicts with unresolved findings. Resolved findings alone cannot
+grant a structured pass, but allow an otherwise acceptable formal P3 review. All unresolved review threads keep the gate red,
 including threads from earlier commits. Native reviews require an exact
 `commit_id`, including when no request marker exists.
 
