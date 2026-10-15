@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -134,6 +134,7 @@ function runScript(script, scenario = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'native-review-test-'));
   try {
     const log = join(dir, 'calls.jsonl');
+    const output = join(dir, 'outputs');
     const fixture = { head, old, marker: createAiReviewRequestMarkerBody({ agent: 'codex', headSha: head, requestId: 'test', sourceCommentId: '1', sourceCommentCreatedAt: requestedAt, requestedAt }), comments: [comment(receipt)], ...scenario };
     const eventPath = join(dir, 'event.json');
     writeFileSync(eventPath, JSON.stringify(scenario.event || {}));
@@ -155,8 +156,8 @@ function runScript(script, scenario = {}) {
         else throw new Error('Unexpected request '+path);
         return new Response(JSON.stringify(data),{status:200});
       };`);
-    const result = spawnSync(process.execPath, ['--import', loader, `scripts/${script}.mjs`], { cwd: new URL('..', import.meta.url), encoding: 'utf8', env: { ...process.env, GITHUB_TOKEN: 'fixture-token', GITHUB_REPOSITORY: 'o/r', GITHUB_EVENT_PATH:eventPath, AI_REVIEW_PR_NUMBER: '8', AI_REVIEW_HEAD_SHA: head, AI_REVIEW_AGENT: 'codex', AI_REVIEW_WAIT_MS: '1', AI_REVIEW_DEBOUNCE_MS: '0', AI_REVIEW_CHECK_CONCLUSION: 'success', ...scenario.env } });
-    return { ...result, calls: readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse) };
+    const result = spawnSync(process.execPath, ['--import', loader, `scripts/${script}.mjs`], { cwd: new URL('..', import.meta.url), encoding: 'utf8', env: { ...process.env, GITHUB_TOKEN: 'fixture-token', GITHUB_REPOSITORY: 'o/r', GITHUB_EVENT_PATH:eventPath, GITHUB_OUTPUT:output, AI_REVIEW_PR_NUMBER: '8', AI_REVIEW_HEAD_SHA: head, AI_REVIEW_AGENT: 'codex', AI_REVIEW_WAIT_MS: '1', AI_REVIEW_DEBOUNCE_MS: '0', AI_REVIEW_CHECK_CONCLUSION: 'success', ...scenario.env } });
+    return { ...result, outputs:existsSync(output) ? readFileSync(output,'utf8') : '', calls: readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse) };
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
@@ -204,5 +205,5 @@ test('production requeue recovers active-gate completion race once and avoids re
 test('production context resolver keeps the webhook head when a push races context resolution', () => {
   const result = runScript('resolve-pr-context', { event: { pull_request: { number: 8, head: { sha: old } } }, env: { AI_REVIEW_HEAD_SHA: '' } });
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(JSON.parse(result.stdout).head_sha, old);
+  assert.ok(result.outputs.split('\n').includes('head_sha=' + old));
 });

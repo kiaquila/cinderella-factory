@@ -5,7 +5,7 @@
 - [x] Implement strict evidence handling and finding preservation.
 - [x] Update created/edited workflow and runtime routing, requeue, and publication.
 - [x] Add meaningful regression coverage and run project preflight.
-- [ ] Publish ready PR and request native review from owner for exact head.
+- [x] Publish ready PR and request native review from owner for exact head.
 - [ ] Resolve findings and verify required checks, threads, and conflicts.
 - [ ] Observe 120 stable seconds, merge normally, and verify GitHub merge SHA.
 
@@ -34,3 +34,10 @@ predates a fresh marker so a new request cannot hide it.
 
 Project preflight passed: repository baseline, committed/worktree feature memory,
 script syntax, and all 26 tests. `git diff --check` passed.
+
+PR #8: https://github.com/kiaquila/cinderella-factory/pull/8.
+Owner-authored exact-head native request for 625144f98ecdf9c2babdaaf4ea689efbb71f6d01:
+https://github.com/kiaquila/cinderella-factory/pull/8#issuecomment-6203427490.
+The CI run caught a test harness assumption: GitHub sets GITHUB_OUTPUT, so the
+resolver correctly writes a file instead of stdout. The harness now supplies
+and reads its own output file, isolating the parent Actions environment.
