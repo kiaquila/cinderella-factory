@@ -137,7 +137,8 @@ export function isCodexReviewSignal(body) {
 }
 
 export function codexCommentTimestamp(comment) {
-  return comment?.updated_at || comment?.created_at || "";
+  const structured = String(comment?.body || "").trim().startsWith("<!-- codex-pull-request-review-summary -->");
+  return (structured ? comment?.updated_at || comment?.created_at : comment?.created_at) || "";
 }
 
 function withoutCodexAboutDetails(body) {
@@ -174,18 +175,23 @@ function structuredCodexResult(body, headSha) {
     if (![null, "pending", "queued", "in_progress", "running", "completed", "failed", "cancelled"].includes(review.status)) return null;
     if (review.has_any_findings === false && review.has_unresolved_findings === true) return null;
     if (review.status === null && Object.values(review).some((value) => value !== null)) return null;
+    if (review.status !== null && typeof review.commit_sha !== "string") return null;
+    if (review.status === "completed" && (typeof review.has_any_findings !== "boolean" ||
+        typeof review.has_unresolved_findings !== "boolean")) return null;
   }
   const review = state.code_review;
   if (review.commit_sha !== headSha) return { sha: review.commit_sha, result: "pending" };
   if (review.status !== "completed") return { sha: headSha, result: "pending" };
   if (typeof review.has_any_findings !== "boolean" || typeof review.has_unresolved_findings !== "boolean") return null;
+  // Preserve explicit unresolved state even when visible text is contradictory
+  // or includes a blocking priority, and even before a newer request marker.
+  if (review.has_unresolved_findings) return { sha: headSha, result: "fail" };
   const visible = withoutCodexAboutDetails(body.slice(match[0].length));
   const rows = visible.split("\n").filter((line) => line.includes("**Code Review**"));
   if (rows.length !== 1 || !/✅ \*\*Completed\*\*/.test(rows[0])) return null;
   const commit = rows[0].match(/`([a-f0-9]{7,40})`/g);
   if (commit?.length !== 1 || !headSha.startsWith(commit[0].slice(1, -1))) return null;
   if (/\b(?:P[0-2]|pending|failed|cancelled|in progress)\b/i.test(visible)) return null;
-  if (review.has_unresolved_findings) return { sha: headSha, result: "fail" };
   // Resolved findings alone do not establish severity. A formal P3 review can
   // still pass once its threads are resolved; this summary cannot grant a pass.
   return { sha: headSha, result: review.has_any_findings ? "pending" : "pass" };

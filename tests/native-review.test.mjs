@@ -73,6 +73,9 @@ test('structured summary fails closed for wrong types, schema, SHA, status, mark
     summary().replace('codex-review-state:v1', 'codex-review-state:v2'),
     summary() + '\n<!-- codex-pull-request-review-summary -->',
     summary() + '\n<!-- codex-review-state:v1 {} -->',
+    summary() + '\n<!-- CODEX-REVIEW-STATE:v1 {} -->',
+    summary().replace(JSON.stringify(security), JSON.stringify({...security,status:'completed',has_any_findings:false,has_unresolved_findings:false})),
+    summary().replace(JSON.stringify(security), JSON.stringify({...security,status:'completed',commit_sha:head})),
     summary().replace('✅ **Completed**', '⏳ **Pending**'),
     summary().replace('`2667f79`', '`a1fd451`'),
     summary().replace('"security_review":{', '"security_review":{"unknown":true,'),
@@ -218,4 +221,18 @@ test('new evidence after a completed success is reevaluated without rerunning co
   assert.equal(selectAiReviewRun([run],head,'2026-10-15T21:50:00Z').action,'rerun');
   assert.equal(selectAiReviewRun([run],head,evidenceAt).action,'already_success');
   assert.equal(selectAiReviewRun([run],head,requestedAt).action,'already_success');
+});
+
+test('unresolved structured state predating a new request dominates visible P1 text and a later receipt', () => {
+  const negative = comment(summary({ ...code, has_any_findings: true, has_unresolved_findings: true }) + '\n[P1] Existing unresolved finding', { created_at: '2026-10-15T21:40:00Z' });
+  const result = runScript('ai-review-gate', { comments: [negative, comment(receipt)] });
+  assert.notEqual(result.status, 0, result.stdout);
+});
+
+test('editing an old legacy or receipt comment cannot refresh an immutable review verdict', () => {
+  for (const body of ["Codex Review: Didn't find any major issues.", legacy, receipt]) {
+    const edited = comment(body, { created_at: '2026-10-15T21:40:00Z', updated_at: evidenceAt });
+    assert.notEqual(classifyCodexSummaryComment(edited, head, marker), 'pass');
+    assert.notEqual(runScript('ai-review-gate', { comments: [edited] }).status, 0);
+  }
 });

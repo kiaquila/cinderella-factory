@@ -26,14 +26,14 @@ The existing default-branch gate rejects receipt-prefixed comments. Safe initial
 rollout must be verified with genuine native evidence accepted by that gate; no
 protection change, forged status, or unreviewed privileged PR code is permitted.
 
-Local regression suite: 27 tests passed, including production gate, publisher,
+Local regression suite: 29 tests passed, including production gate, publisher,
 and requeue entrypoints with deterministic HTTP fixtures. Initial sandbox runs
 hit ENOSPC; the same checks succeeded with approved host execution. No unrelated
 files were deleted. Regression tests include a negative structured verdict that
 predates a fresh marker so a new request cannot hide it.
 
 Project preflight passed: repository baseline, committed/worktree feature memory,
-script syntax, and all 27 tests. `git diff --check` passed.
+script syntax, and all 29 tests. `git diff --check` passed.
 
 PR #8: https://github.com/kiaquila/cinderella-factory/pull/8.
 Owner-authored exact-head native request for 625144f98ecdf9c2babdaaf4ea689efbb71f6d01:
@@ -46,3 +46,11 @@ Boundary review preserved formal advisory P3 acceptance after thread resolution:
 structured resolved findings provide no positive evidence themselves, but do not
 invent a blocking severity. New evidence after a successful run is reevaluated;
 evidence already consumed by that success does not cause redundant reruns.
+
+Native review 5540653867 on 98f29e00726e5b7b27b05f4bf291c377326acf63
+reported P1 (visible severity hid an older structured unresolved flag) and P2
+(edits refreshed legacy comments). Both were reproduced as failing production
+entrypoint regressions before fixing them. Unresolved structured state now wins
+before visible-text checks, and only persistent structured summaries use update
+time. Legacy/receipt evidence retains immutable creation time. The closed schema
+also rejects completed secondary review state with missing commit or verdict.

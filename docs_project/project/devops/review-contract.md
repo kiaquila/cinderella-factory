@@ -31,13 +31,16 @@ escaped property aliases, malformed markers, and contradictory visible code
 review rows cannot pass. Code review must be completed on the exact full current
 SHA with both finding flags explicitly false. Security state alone never proves
 code review success. The server `updated_at` timestamp binds edited summaries
-to the current request; a comment created before that request can become valid
+to the current request. Legacy comments and receipts always use `created_at`;
+editing an immutable verdict never refreshes it. A structured comment created
+before that request can become valid
 only through a later update. The latest applicable result wins, with failures
 dominating ties. A commit or force-push between the request and evidence rejects
 that comment.
 
 Request freshness never filters out current-head blocking native findings or
-structured verdicts with unresolved findings. Resolved findings alone cannot
+structured verdicts with unresolved findings, even when their visible text is
+malformed or includes blocking severity. Resolved findings alone cannot
 grant a structured pass, but allow an otherwise acceptable formal P3 review. All unresolved review threads keep the gate red,
 including threads from earlier commits. Native reviews require an exact
 `commit_id`, including when no request marker exists.
