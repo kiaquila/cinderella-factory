@@ -46,6 +46,22 @@ severities in either review summaries or inline comments keep the gate red.
 When trusted bot review evidence arrives after a pull-request-triggered
 `AI Review` run already failed or timed out, `AI Review Rerun` reruns the
 current-head pull request run instead of requiring another human command.
+Receipt and structured-summary comments wake the gate on both creation and edit.
+Runtime routing verifies the selected trusted identity; a wakeup is never itself
+positive review evidence. Active gates continue polling. A failed completion
+also checks for evidence newer than that attempt's start, covering arrival after
+the final poll. Requeue is serialized per PR and never repeats an attempt started
+after the same evidence. The router refreshes and rechecks the actual PR head
+before rerunning. Dispatched check publication rechecks that same head; a moved
+head cannot receive success from an old run.
+
+Gate/rerun scripts remain checked out from the default branch. A compatibility
+PR therefore cannot validate itself with its new parser before merge. Initial
+rollout needs authentic native evidence the existing trusted gate understands
+(such as a formal current-head review), while all normal required checks remain
+enforced. If the backend emits only an incompatible receipt, preserve the PR and
+report the rollout blocker; do not substitute PR-controlled privileged scripts,
+forge a status, or change protection.
 
 Branch protection should be applied after this workflow is merged to `main`:
 

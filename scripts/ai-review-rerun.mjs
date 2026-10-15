@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
   extractClaudeOutcome,
+  isCodexReviewSignal,
+  codexCommentTimestamp,
   isTrustedReviewLogin
 } from "./ai-review-helpers.mjs";
 import { readConfig } from "./shared.mjs";
@@ -30,7 +32,7 @@ export function shouldRouteAiReviewRerunEvent(event, selectedAgent = "codex", co
   const login = event.comment.user?.login;
 
   if (agent === "codex") {
-    return /^Codex Review:/i.test(body) && isTrustedReviewLogin(login, "codex", config);
+    return isCodexReviewSignal(body) && isTrustedReviewLogin(login, "codex", config);
   }
 
   if (agent === "claude") {
@@ -97,7 +99,9 @@ export async function rerunAiReviewForPrHead({
   token,
   repository,
   headSha,
-  request = defaultRequest
+  request = defaultRequest,
+  prNumber,
+  evidenceAt
 }) {
   if (!token || !repository || !headSha) {
     throw new Error("token, repository, and headSha are required to rerun AI Review.");
@@ -112,6 +116,14 @@ export async function rerunAiReviewForPrHead({
   );
   const selected = selectAiReviewRun(runs, headSha);
 
+  if (prNumber) {
+    const pull = await request(token, repository, `/repos/${owner}/${repo}/pulls/${prNumber}`);
+    if (pull.head?.sha !== headSha) return { action: "stale", run: null, message: "PR head changed; rerun skipped." };
+  }
+  if (selected.action === "rerun" && evidenceAt &&
+      Date.parse(selected.run.run_started_at || selected.run.created_at || "") >= Date.parse(evidenceAt)) {
+    return { action: "already_evaluated", run: selected.run, message: "This evidence already had a gate attempt; rerun skipped." };
+  }
   if (selected.action === "rerun") {
     await request(
       token,
@@ -138,20 +150,12 @@ export async function rerunAiReviewForPrHead({
   };
 }
 
-async function resolvePullContext({ token, repository, event, request = defaultRequest }) {
-  if (event?.pull_request) {
-    return {
-      prNumber: event.pull_request.number,
-      headSha: event.pull_request.head?.sha
-    };
-  }
-
-  if (!event?.issue?.pull_request || !event?.issue?.number) {
-    throw new Error("Could not resolve pull request from event.");
-  }
+export async function resolvePullContext({ token, repository, event, request = defaultRequest }) {
+  const prNumber = event?.pull_request?.number || (event?.issue?.pull_request && event.issue.number);
+  if (!prNumber) throw new Error("Could not resolve pull request from event.");
 
   const [owner, repo] = repository.split("/");
-  const pull = await request(token, repository, `/repos/${owner}/${repo}/pulls/${event.issue.number}`);
+  const pull = await request(token, repository, `/repos/${owner}/${repo}/pulls/${prNumber}`);
   return {
     prNumber: pull.number,
     headSha: pull.head?.sha
@@ -171,16 +175,37 @@ async function main() {
   }
 
   const event = JSON.parse(readFileSync(eventPath, "utf8"));
-  if (!shouldRouteAiReviewRerunEvent(event, selectedAgent, config)) {
-    console.log("AI Review rerun skipped: event is not trusted review evidence for the selected agent.");
-    return;
+  let context;
+  let evidenceAt;
+  if (event.workflow_run) {
+    const run = event.workflow_run;
+    const number = run.pull_requests?.[0]?.number;
+    if (run.event !== "pull_request" || run.path !== ".github/workflows/ai-review.yml" ||
+        !rerunnableConclusions.has(run.conclusion) || !number) return;
+    const pull = await defaultRequest(token, repository, `/repos/${repository}/pulls/${number}`);
+    if (pull.state !== "open" || pull.head?.sha !== run.head_sha) return;
+    context = { prNumber: number, headSha: pull.head.sha };
+    // Recover evidence that arrived while a gate was active but after its last
+    // poll. An attempt started after that evidence is never requeued again.
+    const comments = await listPaginated(defaultRequest, token, repository, `/repos/${repository}/issues/${number}/comments`);
+    const reviews = await listPaginated(defaultRequest, token, repository, `/repos/${repository}/pulls/${number}/reviews`);
+    const times = [
+      ...comments.filter((comment) => shouldRouteAiReviewRerunEvent({ issue: { pull_request: {} }, comment }, selectedAgent, config)).map(codexCommentTimestamp),
+      ...reviews.filter((review) => shouldRouteAiReviewRerunEvent({ review, pull_request: pull }, selectedAgent, config)).map((review) => review.submitted_at)
+    ].filter((value) => Number.isFinite(Date.parse(value)));
+    evidenceAt = times.sort((a, b) => Date.parse(b) - Date.parse(a))[0];
+    if (!evidenceAt) return;
+  } else {
+    if (!shouldRouteAiReviewRerunEvent(event, selectedAgent, config)) {
+      console.log("AI Review rerun skipped: event is not trusted review evidence for the selected agent.");
+      return;
+    }
+    context = await resolvePullContext({ token, repository, event });
+    if (event.review?.commit_id && event.review.commit_id !== context.headSha) return;
+    evidenceAt = event.review?.submitted_at || codexCommentTimestamp(event.comment);
   }
-
-  const context = await resolvePullContext({ token, repository, event });
   const result = await rerunAiReviewForPrHead({
-    token,
-    repository,
-    headSha: context.headSha
+    token, repository, headSha: context.headSha, prNumber: context.prNumber, evidenceAt
   });
   console.log(result.message);
 }

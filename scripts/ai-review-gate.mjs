@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import {
   createAiReviewRequestMarkerBody,
-  hasHeadUpdateBetweenTimestamps,
-  isAcceptableCodexSummaryComment,
+  latestCodexSummaryResult,
+  hasBlockingCodexStructuredSummary,
   isTrustedAssociation,
   latestAiReviewRequestMarker,
   latestClaudeOutcome,
@@ -161,7 +161,34 @@ function isAfterRequest(value, requestMarker) {
   return Number.isFinite(valueTime) && Number.isFinite(requestedAt) && valueTime >= requestedAt;
 }
 
-async function fetchEvidence() {
+async function hasUnresolvedThreads() {
+  let cursor = null;
+  do {
+    const data = await request("/graphql", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query: `query($owner:String!,$repo:String!,$number:Int!,$cursor:String) {
+          repository(owner:$owner,name:$repo) { pullRequest(number:$number) {
+            reviewThreads(first:100,after:$cursor) {
+              nodes { isResolved } pageInfo { hasNextPage endCursor }
+            }
+          } }
+        }`, variables: { owner, repo, number: Number(prNumber), cursor }
+      })
+    });
+    const threads = data.data?.repository?.pullRequest?.reviewThreads;
+    if (data.errors || !Array.isArray(threads?.nodes) || !threads.pageInfo) {
+      throw new Error("Could not verify unresolved review threads.");
+    }
+    if (threads.nodes.some((thread) => thread.isResolved !== true)) return true;
+    if (!threads.pageInfo.hasNextPage) return false;
+    if (!threads.pageInfo.endCursor || threads.pageInfo.endCursor === cursor) throw new Error("Invalid review thread pagination.");
+    cursor = threads.pageInfo.endCursor;
+  } while (cursor);
+  return false;
+}
+
+async function collectEvidence() {
   if (!await currentHeadMatches()) return "stale";
 
   if (selectedAgent === "claude") {
@@ -194,26 +221,19 @@ async function fetchEvidence() {
     }
 
     const reviewComments = await listPaginated(`/repos/${owner}/${repo}/pulls/${prNumber}/comments`);
+    // Findings and unresolved threads survive a new request marker.
+    if (await hasUnresolvedThreads()) return "fail";
+    if (comments.some((comment) => hasBlockingCodexStructuredSummary(comment, headSha, config))) return "fail";
+    if (latestCodexNativeReviewResult(reviews, reviewComments, headSha, config) === "fail") return "fail";
     const reviewCandidates = requestMarker
       ? reviews.filter((review) => isAfterRequest(review.submitted_at, requestMarker))
       : reviews;
-    const latestCodexResult = latestCodexNativeReviewResult(reviewCandidates, reviewComments, headSha, config);
-    if (latestCodexResult === "pass") return "pass";
-    if (latestCodexResult === "fail") return "fail";
-
-    if (!requestMarker) return "pending";
-
+    const nativeResult = latestCodexNativeReviewResult(reviewCandidates, reviewComments, headSha, config);
+    if (!requestMarker) return nativeResult || "pending";
     timeline ||= await listPaginated(`/repos/${owner}/${repo}/issues/${prNumber}/timeline`);
-    const triggerAt = requestMarker.sourceCommentCreatedAt || requestMarker.requestedAt || requestMarker.commentCreatedAt;
-    const summaryAccepted = comments.some((comment) => {
-      if (!isAcceptableCodexSummaryComment(comment, headSha, requestMarker, config)) return false;
-      if (hasHeadUpdateBetweenTimestamps(timeline, triggerAt, comment.created_at)) {
-        console.warn(`AI Review gate rejected Codex summary ${comment.id}: head moved between trigger ${triggerAt} and summary ${comment.created_at}.`);
-        return false;
-      }
-      return true;
-    });
-    return summaryAccepted ? "pass" : "pending";
+    const summaryResult = latestCodexSummaryResult(comments, headSha, requestMarker, timeline, config);
+    if (summaryResult === "fail") return "fail";
+    return nativeResult === "pass" || summaryResult === "pass" ? "pass" : "pending";
   }
 
   const reviewComments = await listPaginated(`/repos/${owner}/${repo}/pulls/${prNumber}/comments`);
@@ -224,11 +244,16 @@ async function fetchEvidence() {
   return "pending";
 }
 
+async function fetchEvidence() {
+  const result = await collectEvidence();
+  return await currentHeadMatches() ? result : "stale";
+}
+
 await maybePostTriggerComment();
 
 if (!await waitForQuietHead()) {
   console.log(`AI Review gate skipped stale run for ${headSha}; PR head changed during debounce.`);
-  process.exit(0);
+  process.exit(1);
 }
 
 const started = Date.now();
@@ -259,8 +284,8 @@ while (Date.now() - started <= maxWaitMs) {
 }
 
 if (outcome === "stale") {
-  console.log(`AI Review gate skipped stale run for ${headSha}; PR head moved.`);
-  process.exit(0);
+  console.log(`AI Review gate rejected stale run for ${headSha}; PR head moved.`);
+  process.exit(1);
 }
 
 if (outcome === "pass") {

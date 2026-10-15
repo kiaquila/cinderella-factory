@@ -28,6 +28,20 @@ const detailsUrl = process.env.GITHUB_RUN_ID
   ? `${process.env.GITHUB_SERVER_URL || "https://github.com"}/${repository}/actions/runs/${process.env.GITHUB_RUN_ID}`
   : undefined;
 
+// A dispatched workflow runs on the default branch, so bind its synthetic
+// check to the explicitly validated PR head and recheck immediately before POST.
+const prNumber = process.env.AI_REVIEW_PR_NUMBER;
+if (!prNumber) throw new Error("AI_REVIEW_PR_NUMBER is required to publish a head-bound check.");
+const pullResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}`, {
+  headers: { authorization: `Bearer ${token}`, accept: "application/vnd.github+json" }
+});
+if (!pullResponse.ok) throw new Error(`Cannot verify PR head: ${pullResponse.status}`);
+const pull = await pullResponse.json();
+if (pull.head?.sha !== headSha) {
+  console.log(`Refusing to publish stale AI Review check for ${headSha}.`);
+  process.exit(0);
+}
+
 const payload = {
   name: "AI Review",
   head_sha: headSha,
