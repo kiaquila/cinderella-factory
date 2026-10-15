@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import {
   classifyCodexSummaryComment, latestCodexSummaryResult,
-  classifyCodexNativeReview, createAiReviewRequestMarkerBody
+  classifyCodexNativeReview, createAiReviewRequestMarkerBody, hasUnresolvedReviewThreads
 } from '../scripts/ai-review-helpers.mjs';
 import { shouldRouteAiReviewRerunEvent, rerunAiReviewForPrHead, resolvePullContext, selectAiReviewRun } from '../scripts/ai-review-rerun.mjs';
 
@@ -257,4 +257,27 @@ test('successful workflow completion recovers late blocking evidence without rep
   const positive=runScript('ai-review-rerun',{...scenario,reviews:[]});
   assert.equal(positive.status,0,positive.stderr);
   assert.equal(positive.calls.filter(call=>call.path.endsWith('/rerun')).length,0);
+});
+
+test('successful completion recovers a late unresolved P3 thread just like the gate', () => {
+  const event={workflow_run:{event:'pull_request',path:'.github/workflows/ai-review.yml',conclusion:'success',head_sha:head,pull_requests:[{number:8}]}};
+  const user={login:'chatgpt-codex-connector[bot]'};
+  const scenario={event,unresolved:true,runConclusion:'success',runUpdated:'2026-10-15T21:50:00Z',reviews:[{id:1,commit_id:head,state:'COMMENTED',submitted_at:evidenceAt,user}],reviewComments:[{pull_request_review_id:1,user,body:'P3 advisory'}]};
+  const result=runScript('ai-review-rerun',scenario);
+  assert.equal(result.status,0,result.stderr);
+  assert.equal(result.calls.filter(call=>call.path.endsWith('/rerun')).length,1);
+  const resolved=runScript('ai-review-rerun',{...scenario,unresolved:false});
+  assert.equal(resolved.status,0,resolved.stderr);
+  assert.equal(resolved.calls.filter(call=>call.path.endsWith('/rerun')).length,0);
+});
+
+
+test('shared thread verification paginates and fails closed on unavailable thread state', async () => {
+  let calls=0;
+  const result=await hasUnresolvedReviewThreads({owner:'o',repo:'r',prNumber:8,request:async(_path,options)=>{
+    const cursor=JSON.parse(options.body).variables.cursor;calls++;
+    return {data:{repository:{pullRequest:{reviewThreads:cursor ? {nodes:[{isResolved:false}],pageInfo:{hasNextPage:false}} : {nodes:Array.from({length:100},()=>({isResolved:true})),pageInfo:{hasNextPage:true,endCursor:'next'}}}}}};
+  }});
+  assert.equal(result,true);assert.equal(calls,2);
+  await assert.rejects(()=>hasUnresolvedReviewThreads({owner:'o',repo:'r',prNumber:8,request:async()=>({errors:[{message:'forbidden'}]})}),/Could not verify/);
 });

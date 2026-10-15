@@ -17,3 +17,8 @@ and a full exact commit SHA. Their update timestamp matters because the native
 bot edits a persistent comment. Native findings and unresolved threads dominate
 all positive comment evidence. PR-controlled code is never substituted for the
 trusted default-branch gate during initial rollout.
+
+The gate and requeue path share one async Codex blocking-evidence predicate.
+Native review exposed divergence for late unresolved advisory threads; sharing
+that predicate ensures both callers verify the same paginated thread state,
+structured unresolved flags, and native severities.

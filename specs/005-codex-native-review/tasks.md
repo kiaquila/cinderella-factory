@@ -26,14 +26,14 @@ The existing default-branch gate rejects receipt-prefixed comments. Safe initial
 rollout must be verified with genuine native evidence accepted by that gate; no
 protection change, forged status, or unreviewed privileged PR code is permitted.
 
-Local regression suite: 31 tests passed, including production gate, publisher,
+Local regression suite: 33 tests passed, including production gate, publisher,
 and requeue entrypoints with deterministic HTTP fixtures. Initial sandbox runs
 hit ENOSPC; the same checks succeeded with approved host execution. No unrelated
 files were deleted. Regression tests include a negative structured verdict that
 predates a fresh marker so a new request cannot hide it.
 
 Project preflight passed: repository baseline, committed/worktree feature memory,
-script syntax, and all 31 tests. `git diff --check` passed.
+script syntax, and all 33 tests. `git diff --check` passed.
 
 PR #8: https://github.com/kiaquila/cinderella-factory/pull/8.
 Owner-authored exact-head native request for 625144f98ecdf9c2babdaaf4ea689efbb71f6d01:
@@ -62,3 +62,10 @@ failures. Successful completions now inspect current blocking native/structured
 evidence against attempt start time, while consumed positives remain deduplicated.
 A later attempt started strictly after the evidence is never replayed again,
 including when the initial timestamps have only second precision.
+
+Native review 5540764230 on 9bf05457ba3ca64ccd5f4c769e775a5e19782632
+reported P1 for late unresolved P3 threads omitted from success recovery. The
+production-router regression failed before the fix. Gate and recovery now share
+the entire Codex blocking predicate, including paginated GraphQL thread checks.
+Regression coverage also verifies resolved P3 does not replay an already consumed
+success and unavailable thread state fails closed.

@@ -3,8 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
   extractClaudeOutcome,
-  hasBlockingCodexStructuredSummary,
-  latestCodexNativeReviewResult,
+  hasBlockingCodexEvidence,
   latestNativeReviewResult,
   latestClaudeOutcome,
   isCodexReviewSignal,
@@ -181,8 +180,11 @@ async function hasBlockingEvidence({ token, repository, prNumber, headSha, selec
   reviews ||= await listPaginated(defaultRequest, token, repository, `/repos/${repository}/pulls/${prNumber}/reviews`);
   const reviewComments = await listPaginated(defaultRequest, token, repository, `/repos/${repository}/pulls/${prNumber}/comments`);
   if (selectedAgent === "codex") {
-    return latestCodexNativeReviewResult(reviews, reviewComments, headSha, config) === "fail" ||
-      comments.some((comment) => hasBlockingCodexStructuredSummary(comment, headSha, config));
+    const [owner, repo] = repository.split("/");
+    return hasBlockingCodexEvidence({
+      request: (path, options) => defaultRequest(token, repository, path, options),
+      owner, repo, prNumber, comments, reviews, reviewComments, headSha, config
+    });
   }
   return latestNativeReviewResult(reviews, reviewComments, selectedAgent, headSha, config) === "fail";
 }

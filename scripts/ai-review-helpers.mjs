@@ -356,3 +356,37 @@ export function latestClaudeOutcome(comments = [], headSha, config = {}) {
     .filter(Boolean)
     .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0]?.outcome || null;
 }
+
+export async function hasUnresolvedReviewThreads({ request, owner, repo, prNumber }) {
+  let cursor = null;
+  do {
+    const data = await request("/graphql", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query: `query($owner:String!,$repo:String!,$number:Int!,$cursor:String) {
+          repository(owner:$owner,name:$repo) { pullRequest(number:$number) {
+            reviewThreads(first:100,after:$cursor) {
+              nodes { isResolved } pageInfo { hasNextPage endCursor }
+            }
+          } }
+        }`, variables: { owner, repo, number: Number(prNumber), cursor }
+      })
+    });
+    const threads = data.data?.repository?.pullRequest?.reviewThreads;
+    if (data.errors || !Array.isArray(threads?.nodes) || !threads.pageInfo) {
+      throw new Error("Could not verify unresolved review threads.");
+    }
+    if (threads.nodes.some((thread) => thread.isResolved !== true)) return true;
+    if (!threads.pageInfo.hasNextPage) return false;
+    if (!threads.pageInfo.endCursor || threads.pageInfo.endCursor === cursor) throw new Error("Invalid review thread pagination.");
+    cursor = threads.pageInfo.endCursor;
+  } while (cursor);
+  return false;
+}
+
+export async function hasBlockingCodexEvidence({ request, owner, repo, prNumber,
+  comments = [], reviews = [], reviewComments = [], headSha, config = {} }) {
+  if (await hasUnresolvedReviewThreads({ request, owner, repo, prNumber })) return true;
+  return comments.some((comment) => hasBlockingCodexStructuredSummary(comment, headSha, config)) ||
+    latestCodexNativeReviewResult(reviews, reviewComments, headSha, config) === "fail";
+}
