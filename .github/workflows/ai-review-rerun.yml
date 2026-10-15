@@ -21,7 +21,7 @@ jobs:
       (
         github.event_name == 'workflow_run' &&
         github.event.workflow_run.event == 'pull_request' &&
-        contains(fromJSON('["failure","cancelled","timed_out","action_required"]'), github.event.workflow_run.conclusion)
+        contains(fromJSON('["failure","cancelled","timed_out","action_required","success"]'), github.event.workflow_run.conclusion)
       ) ||
       github.event_name == 'pull_request_review' ||
       (

@@ -26,14 +26,14 @@ The existing default-branch gate rejects receipt-prefixed comments. Safe initial
 rollout must be verified with genuine native evidence accepted by that gate; no
 protection change, forged status, or unreviewed privileged PR code is permitted.
 
-Local regression suite: 29 tests passed, including production gate, publisher,
+Local regression suite: 31 tests passed, including production gate, publisher,
 and requeue entrypoints with deterministic HTTP fixtures. Initial sandbox runs
 hit ENOSPC; the same checks succeeded with approved host execution. No unrelated
 files were deleted. Regression tests include a negative structured verdict that
 predates a fresh marker so a new request cannot hide it.
 
 Project preflight passed: repository baseline, committed/worktree feature memory,
-script syntax, and all 29 tests. `git diff --check` passed.
+script syntax, and all 31 tests. `git diff --check` passed.
 
 PR #8: https://github.com/kiaquila/cinderella-factory/pull/8.
 Owner-authored exact-head native request for 625144f98ecdf9c2babdaaf4ea689efbb71f6d01:
@@ -54,3 +54,11 @@ entrypoint regressions before fixing them. Unresolved structured state now wins
 before visible-text checks, and only persistent structured summaries use update
 time. Legacy/receipt evidence retains immutable creation time. The closed schema
 also rejects completed secondary review state with missing commit or verdict.
+
+Native review 5540708384 on 0a578e28702b9bf1eb1419bceccaf1528053a06c
+reported P1 for blocking evidence arriving between the final poll and successful
+workflow completion. Regression tests reproduced selector and production-router
+failures. Successful completions now inspect current blocking native/structured
+evidence against attempt start time, while consumed positives remain deduplicated.
+A later attempt started strictly after the evidence is never replayed again,
+including when the initial timestamps have only second precision.

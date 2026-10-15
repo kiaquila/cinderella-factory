@@ -121,7 +121,7 @@ test('rerun refreshes event head, rechecks before mutation and deduplicates alre
   const event = { pull_request: { number: 8, head: { sha: old } } };
   const context = await resolvePullContext({ token: 'token', repository: 'o/r', event, request: async () => ({ number: 8, head: { sha: head } }) });
   assert.equal(context.headSha, head);
-  for (const [started, current, expected] of [[requestedAt, head, 'rerun'], [evidenceAt, head, 'already_evaluated'], [requestedAt, old, 'stale']]) {
+  for (const [started, current, expected] of [[requestedAt, head, 'rerun'], ['2026-10-15T21:49:23Z', head, 'already_evaluated'], [requestedAt, old, 'stale']]) {
     const posts = [];
     const result = await rerunAiReviewForPrHead({ token: 'token', repository: 'o/r', headSha: head, prNumber: 8, evidenceAt,
       request: async (_t, _r, path, options = {}) => {
@@ -156,7 +156,7 @@ function runScript(script, scenario = {}) {
         else if(path.endsWith('/reviews')) data=f.reviews||[];
         else if(path.endsWith('/issues/8/comments')) data=options.method==='POST'?{}:[{id:2,user:{login:'github-actions[bot]'},created_at:'2026-10-15T21:45:01Z',body:f.marker},...f.comments];
         else if(path.endsWith('/check-runs')) data={id:123};
-        else if(path.endsWith('/runs')) data={workflow_runs:[{id:42,event:'pull_request',head_sha:f.head,status:f.runStatus||'completed',conclusion:'failure',created_at:'2026-10-15T21:44:00Z',run_started_at:f.runStarted||'2026-10-15T21:44:00Z'}]};
+        else if(path.endsWith('/runs')) data={workflow_runs:[{id:42,event:'pull_request',head_sha:f.head,status:f.runStatus||'completed',conclusion:f.runConclusion||'failure',updated_at:f.runUpdated,created_at:'2026-10-15T21:44:00Z',run_started_at:f.runStarted||'2026-10-15T21:44:00Z'}]};
         else if(path.endsWith('/rerun')) data={};
         else if(path.endsWith('/pulls/8/comments')) data=f.reviewComments||[];
         else if(path.endsWith('/timeline')) data=[];
@@ -164,7 +164,7 @@ function runScript(script, scenario = {}) {
         return new Response(JSON.stringify(data),{status:200});
       };`);
     const result = spawnSync(process.execPath, ['--import', loader, `scripts/${script}.mjs`], { cwd: new URL('..', import.meta.url), encoding: 'utf8', env: { ...process.env, GITHUB_TOKEN: 'fixture-token', GITHUB_REPOSITORY: 'o/r', GITHUB_EVENT_PATH:eventPath, GITHUB_OUTPUT:output, AI_REVIEW_PR_NUMBER: '8', AI_REVIEW_HEAD_SHA: head, AI_REVIEW_AGENT: 'codex', AI_REVIEW_WAIT_MS: '1', AI_REVIEW_DEBOUNCE_MS: '0', AI_REVIEW_CHECK_CONCLUSION: 'success', ...scenario.env } });
-    return { ...result, outputs:existsSync(output) ? readFileSync(output,'utf8') : '', calls: readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse) };
+    return { ...result, outputs:existsSync(output) ? readFileSync(output,'utf8') : '', calls: existsSync(log) ? readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse) : [] };
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
@@ -200,7 +200,7 @@ test('production requeue recovers active-gate completion race once and avoids re
   const result = runScript('ai-review-rerun', { event });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.calls.filter((call) => call.path.endsWith('/rerun')).length, 1);
-  const duplicate = runScript('ai-review-rerun', { event, runStarted: evidenceAt });
+  const duplicate = runScript('ai-review-rerun', { event, runStarted: '2026-10-15T21:49:23Z' });
   assert.equal(duplicate.status, 0, duplicate.stderr);
   assert.equal(duplicate.calls.filter((call) => call.path.endsWith('/rerun')).length, 0);
   const active = runScript('ai-review-rerun', { event: { action: 'edited', issue: { number: 8, pull_request: {} }, comment: comment(summary()) }, runStatus: 'in_progress' });
@@ -235,4 +235,26 @@ test('editing an old legacy or receipt comment cannot refresh an immutable revie
     assert.notEqual(classifyCodexSummaryComment(edited, head, marker), 'pass');
     assert.notEqual(runScript('ai-review-gate', { comments: [edited] }).status, 0);
   }
+});
+
+
+test('blocking evidence in a successful completion window invalidates that success', () => {
+  const run={id:42,event:'pull_request',head_sha:head,status:'completed',conclusion:'success',created_at:requestedAt,run_started_at:requestedAt,updated_at:'2026-10-15T21:50:00Z'};
+  assert.equal(selectAiReviewRun([run],head,evidenceAt,true).action,'rerun');
+  assert.equal(selectAiReviewRun([run],head,evidenceAt,false).action,'already_success');
+});
+
+test('successful workflow completion recovers late blocking evidence without replaying consumed positives', () => {
+  const event={workflow_run:{event:'pull_request',path:'.github/workflows/ai-review.yml',conclusion:'success',head_sha:head,pull_requests:[{number:8}]}};
+  const reviews=[{id:1,commit_id:head,state:'COMMENTED',submitted_at:evidenceAt,body:'[P1] Late finding',user:{login:'chatgpt-codex-connector[bot]'}}];
+  const scenario={event,reviews,runConclusion:'success',runUpdated:'2026-10-15T21:50:00Z'};
+  const late=runScript('ai-review-rerun',scenario);
+  assert.equal(late.status,0,late.stderr);
+  assert.equal(late.calls.filter(call=>call.path.endsWith('/rerun')).length,1);
+  const replayed=runScript('ai-review-rerun',{...scenario,runStarted:'2026-10-15T21:50:00Z'});
+  assert.equal(replayed.status,0,replayed.stderr);
+  assert.equal(replayed.calls.filter(call=>call.path.endsWith('/rerun')).length,0);
+  const positive=runScript('ai-review-rerun',{...scenario,reviews:[]});
+  assert.equal(positive.status,0,positive.stderr);
+  assert.equal(positive.calls.filter(call=>call.path.endsWith('/rerun')).length,0);
 });

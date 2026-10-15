@@ -49,10 +49,11 @@ current-head pull request run instead of requiring another human command.
 Receipt and structured-summary comments wake the gate on both creation and edit.
 Runtime routing verifies the selected trusted identity; a wakeup is never itself
 positive review evidence. New evidence after a completed success also causes
-reevaluation, so a previous pass cannot hide later findings. Active gates continue polling. A failed completion
-also checks for evidence newer than that attempt's start, covering arrival after
-the final poll. Requeue is serialized per PR and never repeats an attempt started
-after the same evidence. The router refreshes and rechecks the actual PR head
+reevaluation, so a previous pass cannot hide later findings. Active gates continue polling. Completion also checks for evidence arriving after the final poll. A successful
+run is replayed when current blocking evidence arrived since its start, even
+when the evidence predates workflow completion. Consumed positive evidence does
+not cause that replay. Requeue is serialized per PR and never repeats an attempt
+started strictly after the same evidence. The router refreshes and rechecks the actual PR head
 before rerunning. Dispatched check publication rechecks that same head; a moved
 head cannot receive success from an old run.
 
