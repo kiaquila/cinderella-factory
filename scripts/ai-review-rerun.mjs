@@ -59,9 +59,9 @@ export function selectAiReviewRun(runs = [], headSha, evidenceAt, blockingEviden
   const latestCompletedRun = matchingRuns.find((run) => run.status === "completed");
   if (latestCompletedRun?.conclusion === "success") {
     const completedAt = latestCompletedRun.updated_at || latestCompletedRun.run_started_at || latestCompletedRun.created_at;
-    const startedAt = latestCompletedRun.run_started_at || latestCompletedRun.created_at;
-    const lateBlocking = blockingEvidence && Date.parse(evidenceAt || "") >= Date.parse(startedAt || "");
-    const action = lateBlocking || Date.parse(evidenceAt || "") > Date.parse(completedAt || "") ? "rerun" : "already_success";
+    // A thread may have been reopened without changing any review timestamp.
+    // Current blocking state always invalidates a successful attempt.
+    const action = blockingEvidence || Date.parse(evidenceAt || "") > Date.parse(completedAt || "") ? "rerun" : "already_success";
     return { action, run: latestCompletedRun };
   }
   if (latestCompletedRun && rerunnableConclusions.has(latestCompletedRun.conclusion)) {
@@ -129,7 +129,7 @@ export async function rerunAiReviewForPrHead({
     const pull = await request(token, repository, `/repos/${owner}/${repo}/pulls/${prNumber}`);
     if (pull.head?.sha !== headSha) return { action: "stale", run: null, message: "PR head changed; rerun skipped." };
   }
-  if (selected.action === "rerun" && evidenceAt &&
+  if (selected.action === "rerun" && selected.run.conclusion !== "success" && evidenceAt &&
       Date.parse(selected.run.run_started_at || selected.run.created_at || "") > Date.parse(evidenceAt)) {
     return { action: "already_evaluated", run: selected.run, message: "This evidence already had a gate attempt; rerun skipped." };
   }
@@ -215,7 +215,8 @@ async function main() {
     if (pull.state !== "open" || pull.head?.sha !== run.head_sha) return;
     context = { prNumber: number, headSha: pull.head.sha };
     // Recover evidence that arrived while a gate was active but after its last
-    // poll. An attempt started after that evidence is never requeued again.
+    // poll. Failed attempts consume evidence; a current blocker invalidates
+    // success even when an old thread was reopened without a new timestamp.
     comments = await listPaginated(defaultRequest, token, repository, `/repos/${repository}/issues/${number}/comments`);
     reviews = await listPaginated(defaultRequest, token, repository, `/repos/${repository}/pulls/${number}/reviews`);
     const times = [

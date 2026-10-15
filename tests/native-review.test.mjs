@@ -253,7 +253,10 @@ test('successful workflow completion recovers late blocking evidence without rep
   assert.equal(late.calls.filter(call=>call.path.endsWith('/rerun')).length,1);
   const replayed=runScript('ai-review-rerun',{...scenario,runStarted:'2026-10-15T21:50:00Z'});
   assert.equal(replayed.status,0,replayed.stderr);
-  assert.equal(replayed.calls.filter(call=>call.path.endsWith('/rerun')).length,0);
+  assert.equal(replayed.calls.filter(call=>call.path.endsWith('/rerun')).length,1);
+  const failed=runScript('ai-review-rerun',{...scenario,runConclusion:'failure',runStarted:'2026-10-15T21:50:00Z'});
+  assert.equal(failed.status,0,failed.stderr);
+  assert.equal(failed.calls.filter(call=>call.path.endsWith('/rerun')).length,0);
   const positive=runScript('ai-review-rerun',{...scenario,reviews:[]});
   assert.equal(positive.status,0,positive.stderr);
   assert.equal(positive.calls.filter(call=>call.path.endsWith('/rerun')).length,0);
@@ -266,6 +269,20 @@ test('successful completion recovers a late unresolved P3 thread just like the g
   const result=runScript('ai-review-rerun',scenario);
   assert.equal(result.status,0,result.stderr);
   assert.equal(result.calls.filter(call=>call.path.endsWith('/rerun')).length,1);
+  const resolved=runScript('ai-review-rerun',{...scenario,unresolved:false});
+  assert.equal(resolved.status,0,resolved.stderr);
+  assert.equal(resolved.calls.filter(call=>call.path.endsWith('/rerun')).length,0);
+});
+
+test('a reopened old thread invalidates success even when all review timestamps predate the attempt', () => {
+  const event={workflow_run:{event:'pull_request',path:'.github/workflows/ai-review.yml',conclusion:'success',head_sha:head,pull_requests:[{number:8}]}};
+  const scenario={event,unresolved:true,runConclusion:'success',runStarted:'2026-10-15T21:50:00Z',runUpdated:'2026-10-15T21:51:00Z',reviews:[{id:1,commit_id:old,state:'COMMENTED',submitted_at:requestedAt,user:{login:'chatgpt-codex-connector[bot]'}}]};
+  const result=runScript('ai-review-rerun',scenario);
+  assert.equal(result.status,0,result.stderr);
+  assert.equal(result.calls.filter(call=>call.path.endsWith('/rerun')).length,1);
+  const failed=runScript('ai-review-rerun',{...scenario,runConclusion:'failure'});
+  assert.equal(failed.status,0,failed.stderr);
+  assert.equal(failed.calls.filter(call=>call.path.endsWith('/rerun')).length,0);
   const resolved=runScript('ai-review-rerun',{...scenario,unresolved:false});
   assert.equal(resolved.status,0,resolved.stderr);
   assert.equal(resolved.calls.filter(call=>call.path.endsWith('/rerun')).length,0);

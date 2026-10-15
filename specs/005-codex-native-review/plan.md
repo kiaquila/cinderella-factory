@@ -22,3 +22,9 @@ The gate and requeue path share one async Codex blocking-evidence predicate.
 Native review exposed divergence for late unresolved advisory threads; sharing
 that predicate ensures both callers verify the same paginated thread state,
 structured unresolved flags, and native severities.
+
+Current blocking state invalidates successful runs regardless of review age.
+Failed attempts retain timestamp deduplication to avoid endless recovery loops.
+GitHub Actions does not support review-thread transition events and GraphQL has
+no thread update timestamp; after all workflows complete, the required resolved
+conversation rule remains the merge barrier for reopened threads.

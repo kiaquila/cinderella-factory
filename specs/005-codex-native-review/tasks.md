@@ -26,14 +26,14 @@ The existing default-branch gate rejects receipt-prefixed comments. Safe initial
 rollout must be verified with genuine native evidence accepted by that gate; no
 protection change, forged status, or unreviewed privileged PR code is permitted.
 
-Local regression suite: 33 tests passed, including production gate, publisher,
+Local regression suite: 34 tests passed, including production gate, publisher,
 and requeue entrypoints with deterministic HTTP fixtures. Initial sandbox runs
 hit ENOSPC; the same checks succeeded with approved host execution. No unrelated
 files were deleted. Regression tests include a negative structured verdict that
 predates a fresh marker so a new request cannot hide it.
 
 Project preflight passed: repository baseline, committed/worktree feature memory,
-script syntax, and all 33 tests. `git diff --check` passed.
+script syntax, and all 34 tests. `git diff --check` passed.
 
 PR #8: https://github.com/kiaquila/cinderella-factory/pull/8.
 Owner-authored exact-head native request for 625144f98ecdf9c2babdaaf4ea689efbb71f6d01:
@@ -69,3 +69,13 @@ production-router regression failed before the fix. Gate and recovery now share
 the entire Codex blocking predicate, including paginated GraphQL thread checks.
 Regression coverage also verifies resolved P3 does not replay an already consumed
 success and unavailable thread state fails closed.
+
+Native review on bef154689a8375d75dc1f964edb447ff6ec9552a reported P2 for
+reopened old threads being hidden by review-submission timestamp deduplication.
+The production-router regression failed before the fix. Current blocking state
+now always invalidates success; failed attempts still deduplicate consumed
+evidence. GitHub schema introspection confirms PullRequestReviewThread has no
+updatedAt and no resolved/unresolved timeline event types. Official Actions
+trigger documentation has no pull_request_review_thread event. Post-completion
+reopening is therefore guarded by the existing required resolved-thread rule,
+with reevaluation on the next supported workflow/review/comment event.
