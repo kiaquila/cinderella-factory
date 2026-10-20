@@ -179,13 +179,15 @@ function structuredCodexResult(body, headSha) {
     if (review.status === "completed" && (typeof review.has_any_findings !== "boolean" ||
         typeof review.has_unresolved_findings !== "boolean")) return null;
   }
+  // Either native review can report unresolved current-head findings. Check
+  // both before selecting the code-review verdict or applying its freshness.
+  if (Object.values(state).some((review) =>
+    review.commit_sha === headSha && review.has_unresolved_findings === true
+  )) return { sha: headSha, result: "fail" };
   const review = state.code_review;
   if (review.commit_sha !== headSha) return { sha: review.commit_sha, result: "pending" };
   if (review.status !== "completed") return { sha: headSha, result: "pending" };
   if (typeof review.has_any_findings !== "boolean" || typeof review.has_unresolved_findings !== "boolean") return null;
-  // Preserve explicit unresolved state even when visible text is contradictory
-  // or includes a blocking priority, and even before a newer request marker.
-  if (review.has_unresolved_findings) return { sha: headSha, result: "fail" };
   const visible = withoutCodexAboutDetails(body.slice(match[0].length));
   const rows = visible.split("\n").filter((line) => line.includes("**Code Review**"));
   if (rows.length !== 1 || !/✅ \*\*Completed\*\*/.test(rows[0])) return null;

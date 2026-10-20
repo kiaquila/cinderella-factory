@@ -43,7 +43,9 @@ structured verdicts with unresolved findings, even when their visible text is
 malformed or includes blocking severity. Resolved findings alone cannot
 grant a structured pass, but allow an otherwise acceptable formal P3 review. All unresolved review threads keep the gate red,
 including threads from earlier commits. Native reviews require an exact
-`commit_id`, including when no request marker exists.
+`commit_id`, including when no request marker exists. Explicit unresolved
+current-head findings in either structured code or security review block all
+positive evidence, even before a fresh request or while a review is running.
 
 ## Claude
 

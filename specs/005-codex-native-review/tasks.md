@@ -35,14 +35,14 @@ bootstrap routes below were abandoned. Rollout still requires authentic evidence
 accepted by the default-branch gate, fresh native review, all required checks,
 and 120 stable seconds.
 
-Local regression suite: 34 tests passed, including production gate, publisher,
+Local regression suite: 35 tests passed, including production gate, publisher,
 and requeue entrypoints with deterministic HTTP fixtures. Initial sandbox runs
 hit ENOSPC; the same checks succeeded with approved host execution. No unrelated
 files were deleted. Regression tests include a negative structured verdict that
 predates a fresh marker so a new request cannot hide it.
 
 Project preflight passed: repository baseline, committed/worktree feature memory,
-script syntax, and all 34 tests. `git diff --check` passed.
+script syntax, and all 35 tests. `git diff --check` passed.
 
 PR #8: https://github.com/kiaquila/cinderella-factory/pull/8.
 Owner-authored exact-head native request for 625144f98ecdf9c2babdaaf4ea689efbb71f6d01:
@@ -109,3 +109,12 @@ the trusted gate understands. No owner-authored substitute, invented finding,
 API-forged check, policy change, or code execution from the PR is acceptable.
 If the native backend cannot re-publish authentic evidence, the rollout remains
 blocked rather than weakening protection.
+
+Native review 5585324160 on 0c1274b97e267db6a5e970b4811648a8c4ffc1b6
+found P1: a clean code-review section hid current-head unresolved security-review
+state. The regression reproduced pass instead of fail before the fix. Both
+structured review sections now contribute unresolved blockers before selecting
+the code verdict, including while either review is running or code review names
+an older commit. Production gate and recovery tests verify that a later receipt,
+fresh request or formal approval cannot hide those findings; stale security
+state alone does not block a clean current-head code verdict.

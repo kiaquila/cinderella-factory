@@ -20,7 +20,8 @@ Repository protection and reviewer identities stay unchanged.
    their server update time. Incomplete, malformed, contradictory, or negative
    results cannot provide success.
 3. A new request never hides blocking native findings or unresolved review
-   threads. Current-head formal reviews and advisory P3 behavior are preserved.
+   threads, including current-head security-review findings in a structured
+   summary. Current-head formal reviews and advisory P3 behavior are preserved.
 4. Both workflow filtering and runtime routing admit created/edited native
    signals. Late evidence requeues completed failures; active gates converge
    without repeated requests or rerun loops.

@@ -20,7 +20,7 @@ const receipt = '<!-- codex-review-receipt:v1 -->\n\n' + legacy;
 const comment = (body, extra = {}) => ({ user: { login: 'chatgpt-codex-connector[bot]' }, body, created_at: evidenceAt, ...extra });
 const code = { commit_sha: head, has_any_findings: false, has_unresolved_findings: false, status: 'completed' };
 const security = { commit_sha: null, has_any_findings: null, has_unresolved_findings: null, status: null };
-const summary = (review = code) => '<!-- codex-pull-request-review-summary -->\n<!-- codex-review-state:v1 ' + JSON.stringify({ code_review: review, security_review: security }) + ' -->\n\n## Codex Review Summary\n\nThis comment shows the latest Codex review activity on this pull request.\n\n| Review | Status | Commit | Review trigger |\n| --- | --- | --- | --- |\n| 📝 **Code Review** | ✅ **Completed** <relative-time datetime="2026-10-15T21:49:22Z">2026-10-15T21:49:22Z</relative-time> | `2667f79` | Manual request |';
+const summary = (review = code, securityReview = security) => '<!-- codex-pull-request-review-summary -->\n<!-- codex-review-state:v1 ' + JSON.stringify({ code_review: review, security_review: securityReview }) + ' -->\n\n## Codex Review Summary\n\nThis comment shows the latest Codex review activity on this pull request.\n\n| Review | Status | Commit | Review trigger |\n| --- | --- | --- | --- |\n| 📝 **Code Review** | ✅ **Completed** <relative-time datetime="2026-10-15T21:49:22Z">2026-10-15T21:49:22Z</relative-time> | `2667f79` | Manual request |';
 const classify = (body, extra, request = marker) => classifyCodexSummaryComment(comment(body, extra), head, request);
 
 test('observed receipt and legacy no-findings formats retain current-head request binding', () => {
@@ -227,6 +227,25 @@ test('unresolved structured state predating a new request dominates visible P1 t
   const negative = comment(summary({ ...code, has_any_findings: true, has_unresolved_findings: true }) + '\n[P1] Existing unresolved finding', { created_at: '2026-10-15T21:40:00Z' });
   const result = runScript('ai-review-gate', { comments: [negative, comment(receipt)] });
   assert.notEqual(result.status, 0, result.stdout);
+});
+
+test('unresolved current-head security findings dominate clean code review, receipts and formal approval', () => {
+  for (const status of ['completed', 'running']) {
+    const finding = { ...code, status, has_any_findings: true, has_unresolved_findings: true };
+    for (const codeReview of [code, { ...code, status: 'running' }, { ...code, commit_sha: old }]) {
+      const body = summary(codeReview, finding);
+      assert.equal(classify(body), 'fail');
+      const negative = comment(body, { created_at: '2026-10-15T21:40:00Z' });
+      const comments = [negative, comment(receipt)];
+      const reviews = [{ id: 1, commit_id: head, state: 'APPROVED', submitted_at: evidenceAt, user: comment('').user }];
+      assert.notEqual(runScript('ai-review-gate', { comments, reviews }).status, 0);
+      const event = { workflow_run: { event: 'pull_request', path: '.github/workflows/ai-review.yml', conclusion: 'success', head_sha: head, pull_requests: [{ number: 8 }] } };
+      const recovery = runScript('ai-review-rerun', { comments, reviews, event, runConclusion: 'success', runUpdated: evidenceAt });
+      assert.equal(recovery.status, 0, recovery.stderr);
+      assert.equal(recovery.calls.filter(call => call.path.endsWith('/rerun')).length, 1);
+    }
+    assert.equal(classify(summary(code, { ...finding, commit_sha: old })), 'pass');
+  }
 });
 
 test('editing an old legacy or receipt comment cannot refresh an immutable review verdict', () => {
