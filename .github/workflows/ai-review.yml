@@ -2,7 +2,7 @@ name: AI Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, labeled]
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -31,14 +31,12 @@ concurrency:
 
 jobs:
   ai-review:
-    name: ${{ github.event.action == 'labeled' && github.event.label.name == 'ai-review-parser-bootstrap' && 'AI Review (standard)' || 'AI Review' }}
+    name: AI Review
     if: |
-      !(github.event.action == 'labeled' && github.event.label.name == 'ai-review-parser-bootstrap') && (
       github.event_name == 'workflow_dispatch' ||
       (
         github.event_name == 'pull_request' &&
         github.event.pull_request.draft == false
-      )
       )
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -147,46 +145,4 @@ jobs:
           AI_REVIEW_HEAD_UPDATED_AT: ${{ github.event.pull_request.updated_at || '' }}
           AI_REVIEW_WAIT_MS: "1200000"
           AI_REVIEW_POLL_MS: "15000"
-          AI_REVIEW_DEBOUNCE_MS: "45000"
-
-  read-only-bootstrap:
-    name: ${{ github.event.action == 'labeled' && github.event.label.name == 'ai-review-parser-bootstrap' && 'AI Review' || 'AI Review bootstrap (inactive)' }}
-    if: github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'ai-review-parser-bootstrap'
-    permissions:
-      contents: read
-      pull-requests: read
-      issues: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout exact PR head without stored credentials
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-
-      - name: Checkout default-branch review policy
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-          path: .gate-policy
-          persist-credentials: false
-
-      - name: Verify owner, merge context and live PR head
-        run: node scripts/ai-review-bootstrap.mjs
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          AI_REVIEW_AGENT: ${{ vars.AI_REVIEW_AGENT }}
-
-      - name: Run actual native review gate with read-only access
-        run: node scripts/ai-review-gate.mjs
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          AI_REVIEW_CONFIG_ROOT: .gate-policy
-          AI_REVIEW_AGENT: codex
-          AI_REVIEW_PR_NUMBER: ${{ github.event.pull_request.number }}
-          AI_REVIEW_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          AI_REVIEW_TRIGGER_MODE: skip
-          AI_REVIEW_READ_ONLY: "1"
-          AI_REVIEW_WAIT_MS: "300000"
           AI_REVIEW_DEBOUNCE_MS: "45000"

@@ -6,7 +6,7 @@
 - [x] Update created/edited workflow and runtime routing, requeue, and publication.
 - [x] Add meaningful regression coverage and run project preflight.
 - [x] Publish ready PR and request native review from owner for exact head.
-- [ ] Add and natively review an owner-triggered, read-only exact-head PR bootstrap job.
+- [x] Reject candidate-code bootstrap; retain default-branch validation for rollout.
 - [ ] Resolve findings and verify required checks, threads, and conflicts.
 - [ ] Observe 120 stable seconds, merge normally, and verify GitHub merge SHA.
 
@@ -30,20 +30,19 @@ protection change, forged status, or unreviewed privileged PR code is permitted.
 Resumed on 2026-10-20: origin/main is unchanged at 417daf887927eb88accaded88dcb3196361e6e97.
 The exact-head native review of ed53a38cdce2b4584387a19eb52379e9e714d681
 completed without findings, but the trusted dispatched run timed out as expected.
-The owner requested a safe rollout through normal merge. The initial attempted path was a
-read-only manual mode of the same workflow. The successful run confirmed the
-gate and token boundary, but did not satisfy the ruleset; the PR label route
-below replaces it. Fresh native review, a real PR gate and 120 stable seconds
-remain required.
+The owner requested a safe rollout through normal merge. Both candidate-code
+bootstrap routes below were abandoned. Rollout still requires authentic evidence
+accepted by the default-branch gate, fresh native review, all required checks,
+and 120 stable seconds.
 
-Local regression suite: 37 tests passed, including production gate, publisher,
+Local regression suite: 34 tests passed, including production gate, publisher,
 and requeue entrypoints with deterministic HTTP fixtures. Initial sandbox runs
 hit ENOSPC; the same checks succeeded with approved host execution. No unrelated
 files were deleted. Regression tests include a negative structured verdict that
 predates a fresh marker so a new request cannot hide it.
 
 Project preflight passed: repository baseline, committed/worktree feature memory,
-script syntax, and all 37 tests. `git diff --check` passed.
+script syntax, and all 34 tests. `git diff --check` passed.
 
 PR #8: https://github.com/kiaquila/cinderella-factory/pull/8.
 Owner-authored exact-head native request for 625144f98ecdf9c2babdaaf4ea689efbb71f6d01:
@@ -90,15 +89,23 @@ trigger documentation has no pull_request_review_thread event. Post-completion
 reopening is therefore guarded by the existing required resolved-thread rule,
 with reevaluation on the next supported workflow/review/comment event.
 
-Read-only rollout validation: preflight passed with 37 tests. Bootstrap context
-coverage rejects 21 unsafe actor, rerun, SHA, ref, repository and PR-state cases;
-production gate tests verify unchanged pass/fail behavior without comment writes.
-Actionlint 1.7.12 and git diff --check passed for the workflow change.
-
 Rollout dead end: the natively reviewed read-only workflow_dispatch job passed
 on 2c753f4d54156d3783fd6b0ab32c3246ea5448e2 (run 39424194419); its log
 confirms only read permissions and the genuine gate pass. GitHub excludes such
 manual job checks from PR ruleset evaluation, so that result did not unlock the
-PR. Official required-check troubleshooting confirms the restriction. The final
-route uses an owner-added ai-review-parser-bootstrap label and a pull_request
-job, with the same read-only gate and live PR/merge context checks.
+PR. Official required-check troubleshooting confirms the restriction.
+
+The subsequent label-triggered candidate gate received native P1 findings on
+7a1f2f3f62da59d24d157f285b70feb464adb7c4: candidate code controlled identity,
+severity, thread and owner validation; its merge/base context was checked only
+before polling. This route was never activated. Remove both bootstrap routes,
+their helper and tests, and restore the unchanged trusted workflow. This removes
+both unsafe execution and the incomplete context guard. A read-only token alone
+does not make candidate code a trusted decision maker for required checks.
+
+Next rollout attempt: obtain a genuine clean native verdict on the final head,
+then ask the native bot to re-publish that existing verdict in the legacy format
+the trusted gate understands. No owner-authored substitute, invented finding,
+API-forged check, policy change, or code execution from the PR is acceptable.
+If the native backend cannot re-publish authentic evidence, the rollout remains
+blocked rather than weakening protection.

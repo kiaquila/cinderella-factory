@@ -15,15 +15,8 @@
 Structured summaries can provide evidence only with the complete observed schema
 and a full exact commit SHA. Their update timestamp matters because the native
 bot edits a persistent comment. Native findings and unresolved threads dominate
-all positive comment evidence. Privileged runs always use default-branch scripts.
-
-For the resumed rollout, add an owner-triggered read-only label event to the
-existing PR workflow. Only its active job is named AI Review. Owner and
-triggering-owner checks fail inside the job, so unauthorized labeling cannot
-create a skipped required gate. The event head and merge ref/SHA/base must match
-the live same-repository PR context. Use the reviewed parser with default-branch
-config and no stored Git credentials, writes, publisher, or API-created checks.
-GitHub Actions reports the real PR gate result. Normal automation is unchanged.
+all positive comment evidence. PR-controlled code is never substituted for the
+trusted default-branch gate during initial rollout.
 
 The gate and requeue path share one async Codex blocking-evidence predicate.
 Native review exposed divergence for late unresolved advisory threads; sharing
