@@ -65,13 +65,35 @@ The next supported review/comment or workflow-completion event reevaluates
 current thread state. Do not configure an unsupported workflow event or infer
 thread transition time from an old review's submission timestamp.
 
-Gate/rerun scripts remain checked out from the default branch. A compatibility
-PR therefore cannot validate itself with its new parser before merge. Initial
-rollout needs authentic native evidence the existing trusted gate understands
-(such as a formal current-head review), while all normal required checks remain
-enforced. If the backend emits only an incompatible receipt, preserve the PR and
-report the rollout blocker; do not substitute PR-controlled privileged scripts,
-forge a status, or change protection.
+Privileged gate/rerun scripts remain checked out from the default branch. When a
+parser compatibility PR cannot satisfy that older parser, the owner can use the
+existing AI Review workflow's explicit `read_only_bootstrap` dispatch mode after
+native review of the full current head, including the workflow. This job has only
+contents, pull-request and issue read permissions, stores no Git credentials, and
+runs the real proposed gate against policy checked out from the default branch.
+It does not invoke the check publisher or post comments. GitHub Actions reports
+the actual job result against the workflow commit; no check is created via API.
+
+The bootstrap fails unless both dispatch and rerun actors are the repository
+owner, its explicit full SHA equals the workflow SHA and live open non-draft
+same-repository PR head, and its ref/base match that PR/default branch. Checks
+fail inside the active required job rather than skipping it. Exactly one active
+job is named AI Review; the inactive alternative has a different name. Normal
+automation keeps using trusted default-branch scripts and its existing permissions.
+
+After obtaining genuine clean native review, dispatch the reviewed branch with
+its full head SHA (a moved branch fails validation):
+
+```bash
+gh workflow run ai-review.yml --ref <reviewed-branch> \
+  -f pr_number=<pr-number> -f head_sha=<full-reviewed-head-sha> \
+  -f read_only_bootstrap=true
+```
+
+Verify that the real run is green on that exact SHA, all required checks and
+threads are satisfied, then observe 120 stable seconds and recheck before normal
+merge. Keep protection and reviewer identities unchanged. Read-only permissions
+and manual dispatch are documented in [GitHub workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax).
 
 Branch protection should be applied after this workflow is merged to `main`:
 

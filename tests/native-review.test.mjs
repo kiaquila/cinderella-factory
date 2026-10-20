@@ -184,6 +184,17 @@ test('production gate fails for findings before a fresh marker, unresolved threa
   }
 });
 
+test('read-only production gate preserves verdicts and never writes GitHub comments', () => {
+  for (const unresolved of [false, true]) {
+    const result = runScript('ai-review-gate', { unresolved, env: { AI_REVIEW_READ_ONLY: '1' } });
+    assert.equal(result.status === 0, !unresolved, result.stdout + result.stderr);
+    assert.equal(result.calls.some(call => call.method === 'POST' && !call.path.endsWith('/graphql')), false);
+  }
+  const trigger = runScript('ai-review-gate', { env: { AI_REVIEW_READ_ONLY: '1', AI_REVIEW_TRIGGER_MODE: 'comment' } });
+  assert.notEqual(trigger.status, 0);
+  assert.equal(trigger.calls.length, 0);
+});
+
 test('production publisher rechecks PR head and publishes only the validated exact SHA', () => {
   const result = runScript('publish-ai-review-check');
   assert.equal(result.status, 0, result.stderr);

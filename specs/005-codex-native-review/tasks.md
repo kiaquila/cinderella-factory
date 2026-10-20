@@ -6,6 +6,7 @@
 - [x] Update created/edited workflow and runtime routing, requeue, and publication.
 - [x] Add meaningful regression coverage and run project preflight.
 - [x] Publish ready PR and request native review from owner for exact head.
+- [ ] Add and natively review an owner-only, read-only exact-head bootstrap job.
 - [ ] Resolve findings and verify required checks, threads, and conflicts.
 - [ ] Observe 120 stable seconds, merge normally, and verify GitHub merge SHA.
 
@@ -23,17 +24,25 @@ behavior is verified through API responses and official documentation instead.
 ## Known Issues
 
 The existing default-branch gate rejects receipt-prefixed comments. Safe initial
-rollout must be verified with genuine native evidence accepted by that gate; no
+rollout must use genuine native evidence and an actual gate execution; no
 protection change, forged status, or unreviewed privileged PR code is permitted.
 
-Local regression suite: 34 tests passed, including production gate, publisher,
+Resumed on 2026-10-20: origin/main is unchanged at 417daf887927eb88accaded88dcb3196361e6e97.
+The exact-head native review of ed53a38cdce2b4584387a19eb52379e9e714d681
+completed without findings, but the trusted dispatched run timed out as expected.
+The owner requested a safe rollout through normal merge. The chosen path is an
+explicit read-only manual mode of the same workflow, with no privileged parser
+execution or synthetic check publication. It needs fresh native review after
+the workflow changes, followed by a real Actions gate and 120 stable seconds.
+
+Local regression suite: 37 tests passed, including production gate, publisher,
 and requeue entrypoints with deterministic HTTP fixtures. Initial sandbox runs
 hit ENOSPC; the same checks succeeded with approved host execution. No unrelated
 files were deleted. Regression tests include a negative structured verdict that
 predates a fresh marker so a new request cannot hide it.
 
 Project preflight passed: repository baseline, committed/worktree feature memory,
-script syntax, and all 34 tests. `git diff --check` passed.
+script syntax, and all 37 tests. `git diff --check` passed.
 
 PR #8: https://github.com/kiaquila/cinderella-factory/pull/8.
 Owner-authored exact-head native request for 625144f98ecdf9c2babdaaf4ea689efbb71f6d01:
@@ -79,3 +88,8 @@ updatedAt and no resolved/unresolved timeline event types. Official Actions
 trigger documentation has no pull_request_review_thread event. Post-completion
 reopening is therefore guarded by the existing required resolved-thread rule,
 with reevaluation on the next supported workflow/review/comment event.
+
+Read-only rollout validation: preflight passed with 37 tests. Bootstrap context
+coverage rejects 18 unsafe actor, rerun, SHA, ref, repository and PR-state cases;
+production gate tests verify unchanged pass/fail behavior without comment writes.
+Actionlint 1.7.12 and git diff --check passed for the workflow change.

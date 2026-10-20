@@ -15,8 +15,15 @@
 Structured summaries can provide evidence only with the complete observed schema
 and a full exact commit SHA. Their update timestamp matters because the native
 bot edits a persistent comment. Native findings and unresolved threads dominate
-all positive comment evidence. PR-controlled code is never substituted for the
-trusted default-branch gate during initial rollout.
+all positive comment evidence. Privileged runs always use default-branch scripts.
+
+For the resumed rollout, add a manual read-only mode to the existing workflow.
+Only its active job is named AI Review. Owner and triggering-owner checks fail
+inside the job, so unauthorized dispatch cannot create a skipped required gate.
+The dispatch SHA must equal both the explicit full SHA and live same-repository
+PR head. Use the reviewed parser with default-branch config and no stored Git
+credentials, writes, publisher, or API-created checks. GitHub Actions reports the
+actual gate exit status on its own commit. Normal automation remains unchanged.
 
 The gate and requeue path share one async Codex blocking-evidence predicate.
 Native review exposed divergence for late unresolved advisory threads; sharing

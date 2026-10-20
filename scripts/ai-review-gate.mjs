@@ -23,6 +23,7 @@ const initialPollMs = Number(process.env.AI_REVIEW_POLL_MS || 15000);
 const maxPollMs = Number(process.env.AI_REVIEW_MAX_POLL_MS || 120000);
 const debounceMs = Number(process.env.AI_REVIEW_DEBOUNCE_MS || 0);
 const bootstrapHumanTrigger = process.env.AI_REVIEW_BOOTSTRAP_HUMAN_TRIGGER === "1";
+const readOnly = process.env.AI_REVIEW_READ_ONLY === "1";
 const headUpdatedAt = process.env.AI_REVIEW_HEAD_UPDATED_AT || "";
 const config = readConfig(configRoot);
 
@@ -38,6 +39,11 @@ if (!new Set(["codex", "claude", "gemini"]).has(selectedAgent)) {
 
 if (!new Set(["skip", "comment"]).has(triggerMode)) {
   console.error(`Unsupported AI_REVIEW_TRIGGER_MODE value: ${triggerMode}`);
+  process.exit(1);
+}
+
+if (readOnly && triggerMode !== "skip") {
+  console.error("Read-only AI Review cannot post a review trigger.");
   process.exit(1);
 }
 
@@ -281,10 +287,12 @@ const failureComment = [
   detail ? `- detail: ${detail}` : ""
 ].filter(Boolean).join("\n");
 
-try {
-  await createComment(failureComment);
-} catch (error) {
-  console.warn(`Could not post AI Review gate failure comment: ${error.message}`);
+if (!readOnly) {
+  try {
+    await createComment(failureComment);
+  } catch (error) {
+    console.warn(`Could not post AI Review gate failure comment: ${error.message}`);
+  }
 }
 
 console.error(`AI Review gate failed for ${selectedAgent} on ${headSha}.${detail}`);

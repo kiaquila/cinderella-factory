@@ -10,6 +10,9 @@ without weakening native review, finding, identity, or default-branch trust rule
 Update the evidence classifier, gate, created/edited event routing, rerun path,
 and dispatched check publisher. Preserve legacy summaries and formal reviews.
 Repository protection and reviewer identities stay unchanged.
+Initial rollout may use an owner-dispatched, read-only job in the existing AI
+Review workflow. It must run the real gate on the reviewed PR head and use
+default-branch policy; it cannot publish a synthetic check or write to GitHub.
 
 ## Acceptance Criteria
 
@@ -26,6 +29,9 @@ Repository protection and reviewer identities stay unchanged.
    without repeated requests or rerun loops.
 5. Head movement during evaluation or publication cannot publish success for a
    newer head. Only trusted default-branch code validates privileged evidence.
+   Read-only bootstrap must fail for a non-owner, rerun by a non-owner, wrong
+   workflow/ref/head, fork, closed/draft PR, or changed base; its actual job
+   result must be bound to the exact PR commit by GitHub Actions.
 6. Regression tests and project preflight pass. A ready PR receives a human
    account native review request for its full head, actual review, green gates,
    resolved threads, and a verified 120-second stable window before normal merge.
