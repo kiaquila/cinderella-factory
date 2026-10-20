@@ -45,7 +45,7 @@ grant a structured pass, but allow an otherwise acceptable formal P3 review. All
 including threads from earlier commits. Native reviews require an exact
 `commit_id`, including when no request marker exists.
 
-Parser rollout can use the owner-only read-only dispatch described in
+Parser rollout can use the owner-triggered read-only label event described in
 `ai-pr-workflow.md`, after genuine native review of that full head. It runs this
 same gate and default-branch review policy. Read-only mode rejects comment
 triggers and never posts failure comments; it cannot publish check runs. Its

@@ -110,7 +110,7 @@ Only trusted actors may trigger AI workflows:
 - `COLLABORATOR`
 
 Privileged review validation always uses default-branch scripts. Parser rollouts
-may use the owner-only read-only dispatch of the AI Review workflow after native
+may use the owner-triggered read-only label event of the AI Review workflow after native
 review of the exact full head, following `docs_project/project/devops/ai-pr-workflow.md`.
 This mode runs the actual gate without write permissions or API-published checks;
 it does not waive required checks, resolved threads, or the stable merge window.

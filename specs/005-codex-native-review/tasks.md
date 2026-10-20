@@ -6,7 +6,7 @@
 - [x] Update created/edited workflow and runtime routing, requeue, and publication.
 - [x] Add meaningful regression coverage and run project preflight.
 - [x] Publish ready PR and request native review from owner for exact head.
-- [ ] Add and natively review an owner-only, read-only exact-head bootstrap job.
+- [ ] Add and natively review an owner-triggered, read-only exact-head PR bootstrap job.
 - [ ] Resolve findings and verify required checks, threads, and conflicts.
 - [ ] Observe 120 stable seconds, merge normally, and verify GitHub merge SHA.
 
@@ -30,10 +30,11 @@ protection change, forged status, or unreviewed privileged PR code is permitted.
 Resumed on 2026-10-20: origin/main is unchanged at 417daf887927eb88accaded88dcb3196361e6e97.
 The exact-head native review of ed53a38cdce2b4584387a19eb52379e9e714d681
 completed without findings, but the trusted dispatched run timed out as expected.
-The owner requested a safe rollout through normal merge. The chosen path is an
-explicit read-only manual mode of the same workflow, with no privileged parser
-execution or synthetic check publication. It needs fresh native review after
-the workflow changes, followed by a real Actions gate and 120 stable seconds.
+The owner requested a safe rollout through normal merge. The initial attempted path was a
+read-only manual mode of the same workflow. The successful run confirmed the
+gate and token boundary, but did not satisfy the ruleset; the PR label route
+below replaces it. Fresh native review, a real PR gate and 120 stable seconds
+remain required.
 
 Local regression suite: 37 tests passed, including production gate, publisher,
 and requeue entrypoints with deterministic HTTP fixtures. Initial sandbox runs
@@ -90,6 +91,14 @@ reopening is therefore guarded by the existing required resolved-thread rule,
 with reevaluation on the next supported workflow/review/comment event.
 
 Read-only rollout validation: preflight passed with 37 tests. Bootstrap context
-coverage rejects 18 unsafe actor, rerun, SHA, ref, repository and PR-state cases;
+coverage rejects 21 unsafe actor, rerun, SHA, ref, repository and PR-state cases;
 production gate tests verify unchanged pass/fail behavior without comment writes.
 Actionlint 1.7.12 and git diff --check passed for the workflow change.
+
+Rollout dead end: the natively reviewed read-only workflow_dispatch job passed
+on 2c753f4d54156d3783fd6b0ab32c3246ea5448e2 (run 39424194419); its log
+confirms only read permissions and the genuine gate pass. GitHub excludes such
+manual job checks from PR ruleset evaluation, so that result did not unlock the
+PR. Official required-check troubleshooting confirms the restriction. The final
+route uses an owner-added ai-review-parser-bootstrap label and a pull_request
+job, with the same read-only gate and live PR/merge context checks.

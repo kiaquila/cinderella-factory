@@ -66,34 +66,34 @@ current thread state. Do not configure an unsupported workflow event or infer
 thread transition time from an old review's submission timestamp.
 
 Privileged gate/rerun scripts remain checked out from the default branch. When a
-parser compatibility PR cannot satisfy that older parser, the owner can use the
-existing AI Review workflow's explicit `read_only_bootstrap` dispatch mode after
-native review of the full current head, including the workflow. This job has only
-contents, pull-request and issue read permissions, stores no Git credentials, and
-runs the real proposed gate against policy checked out from the default branch.
-It does not invoke the check publisher or post comments. GitHub Actions reports
-the actual job result against the workflow commit; no check is created via API.
+parser compatibility PR cannot satisfy that older parser, the owner can add the
+`ai-review-parser-bootstrap` label after native review of the full current head,
+including the workflow. The label event runs a read-only job in the existing
+AI Review workflow. It has only contents, pull-request and issue read permissions,
+stores no Git credentials, and runs the real proposed gate against policy
+checked out from the default branch. It does not invoke the check publisher or
+post comments. GitHub Actions reports the actual PR job result.
 
-The bootstrap fails unless both dispatch and rerun actors are the repository
-owner, its explicit full SHA equals the workflow SHA and live open non-draft
-same-repository PR head, and its ref/base match that PR/default branch. Checks
-fail inside the active required job rather than skipping it. Exactly one active
-job is named AI Review; the inactive alternative has a different name. Normal
-automation keeps using trusted default-branch scripts and its existing permissions.
+The bootstrap fails unless both label and rerun actors are the repository owner,
+the label event's full head SHA equals the live open non-draft same-repository PR
+head, and the workflow ref/merge SHA/base match the live PR context. Checks fail
+inside the active required job rather than skipping it. Exactly one active job
+is named AI Review; the inactive alternative has a different name. Normal
+automation keeps using default-branch scripts and its existing permissions.
 
-After obtaining genuine clean native review, dispatch the reviewed branch with
-its full head SHA (a moved branch fails validation):
+After obtaining genuine clean native review, verify the live full head, then add
+the label (remove and re-add it if a fresh label event is needed):
 
 ```bash
-gh workflow run ai-review.yml --ref <reviewed-branch> \
-  -f pr_number=<pr-number> -f head_sha=<full-reviewed-head-sha> \
-  -f read_only_bootstrap=true
+gh pr edit <pr-number> --add-label ai-review-parser-bootstrap
 ```
 
-Verify that the real run is green on that exact SHA, all required checks and
+Verify that the real PR run is green on that exact head, all required checks and
 threads are satisfied, then observe 120 stable seconds and recheck before normal
-merge. Keep protection and reviewer identities unchanged. Read-only permissions
-and manual dispatch are documented in [GitHub workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax).
+merge. Keep protection and reviewer identities unchanged. Do not use a manual
+workflow job as a substitute: GitHub excludes workflow_dispatch job checks from
+PR required-check evaluation, even when their head SHA matches. See [GitHub's
+required-check troubleshooting](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks).
 
 Branch protection should be applied after this workflow is merged to `main`:
 
