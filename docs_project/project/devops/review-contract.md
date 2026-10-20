@@ -15,7 +15,37 @@ must be submitted after that marker. When no marker exists, such as the
 pull-request-triggered path used by fork PRs, a trusted current-head native
 Codex review is sufficient.
 
-When Codex has no inline findings, a top-level `Codex Review:` summary comment from the trusted Codex bot also satisfies the gate only when it either names the current head SHA in its body or is posted after the trusted marker with no commit or force-push event between the source trigger comment and the summary.
+When Codex has no inline findings, a trusted top-level legacy `Codex Review:`
+comment or `<!-- codex-review-receipt:v1 -->` receipt can satisfy the gate after
+a trusted current-head request. The positive verdict must be explicit and
+unambiguous. Receipts must name the reviewed commit (at least ten hex characters,
+matching the current full SHA); legacy summaries without a commit retain the
+request/timeline binding. Explicit stale commits never fall back to timestamps.
+Only the optional trailing native About Codex details panel is ignored.
+
+The persistent `codex-pull-request-review-summary` comment is also supported.
+Its single `codex-review-state:v1` JSON marker must have exactly `code_review`
+and `security_review`, each with `commit_sha`, `has_any_findings`,
+`has_unresolved_findings`, and `status`. Duplicate/unknown fields, wrong types,
+escaped property aliases, malformed markers, and contradictory visible code
+review rows cannot pass. Code review must be completed on the exact full current
+SHA with both finding flags explicitly false. Security state alone never proves
+code review success. The server `updated_at` timestamp binds edited summaries
+to the current request. Legacy comments and receipts always use `created_at`;
+editing an immutable verdict never refreshes it. A structured comment created
+before that request can become valid
+only through a later update. The latest applicable result wins, with failures
+dominating ties. A commit or force-push between the request and evidence rejects
+that comment.
+
+Request freshness never filters out current-head blocking native findings or
+structured verdicts with unresolved findings, even when their visible text is
+malformed or includes blocking severity. Resolved findings alone cannot
+grant a structured pass, but allow an otherwise acceptable formal P3 review. All unresolved review threads keep the gate red,
+including threads from earlier commits. Native reviews require an exact
+`commit_id`, including when no request marker exists. Explicit unresolved
+current-head findings in either structured code or security review block all
+positive evidence, even before a fresh request or while a review is running.
 
 ## Claude
 

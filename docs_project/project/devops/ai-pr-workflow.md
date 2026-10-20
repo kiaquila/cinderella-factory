@@ -46,6 +46,32 @@ severities in either review summaries or inline comments keep the gate red.
 When trusted bot review evidence arrives after a pull-request-triggered
 `AI Review` run already failed or timed out, `AI Review Rerun` reruns the
 current-head pull request run instead of requiring another human command.
+Receipt and structured-summary comments wake the gate on both creation and edit.
+Runtime routing verifies the selected trusted identity; a wakeup is never itself
+positive review evidence. New evidence after a completed success also causes
+reevaluation, so a previous pass cannot hide later findings. Active gates continue polling. Completion also checks for evidence arriving after the final poll. A successful
+run is replayed whenever current blocking evidence exists, including an old
+thread reopened without changing its review timestamp. Consumed positive evidence
+does not cause that replay. Requeue is serialized per PR; a failed attempt started
+strictly after the same evidence is not replayed. The router refreshes and rechecks the actual PR head
+before rerunning. Dispatched check publication rechecks that same head; a moved
+head cannot receive success from an old run.
+
+GitHub Actions has no supported review-thread resolution/reopening trigger, and
+the GraphQL review-thread object exposes no transition timestamp. A reopening
+after every workflow has completed therefore relies on the separately required
+resolved-conversation branch rule to block merge until the thread is resolved.
+The next supported review/comment or workflow-completion event reevaluates
+current thread state. Do not configure an unsupported workflow event or infer
+thread transition time from an old review's submission timestamp.
+
+Gate/rerun scripts remain checked out from the default branch. A compatibility
+PR therefore cannot validate itself with its new parser before merge. Initial
+rollout needs authentic native evidence the existing trusted gate understands
+(such as a formal current-head review), while all normal required checks remain
+enforced. If the backend emits only an incompatible receipt, preserve the PR and
+report the rollout blocker; do not substitute PR-controlled privileged scripts,
+forge a status, or change protection.
 
 Branch protection should be applied after this workflow is merged to `main`:
 

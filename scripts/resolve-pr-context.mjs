@@ -45,12 +45,13 @@ if (!prNumber) {
 }
 
 const pull = await request(`/repos/${owner}/${repo}/pulls/${prNumber}`);
-if (explicitHeadSha && explicitHeadSha !== pull.head.sha) {
-  console.warn(`AI Review requested head ${explicitHeadSha}, but PR #${prNumber} is now at ${pull.head.sha}; stale gate will be skipped.`);
+const expectedHeadSha = explicitHeadSha || event?.pull_request?.head?.sha;
+if (expectedHeadSha && expectedHeadSha !== pull.head.sha) {
+  console.warn(`AI Review requested head ${expectedHeadSha}, but PR #${prNumber} is now at ${pull.head.sha}; stale gate will be skipped.`);
 }
 const output = {
   pr_number: String(pull.number),
-  head_sha: explicitHeadSha || pull.head.sha,
+  head_sha: expectedHeadSha || pull.head.sha,
   base_ref: pull.base.ref,
   head_ref: pull.head.ref
 };
