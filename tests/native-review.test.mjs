@@ -26,7 +26,7 @@ const classify = (body, extra, request = marker) => classifyCodexSummaryComment(
 test('observed receipt and legacy no-findings formats retain current-head request binding', () => {
   for (const body of [receipt, legacy, "Codex Review: Didn't find any major issues."]) {
     assert.equal(classify(body), 'pass');
-    assert.equal(classify(body + '\n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\nComment "@codex review".\n</details>'), 'pass');
+    assert.equal(classify(body + "\n\n<details> <summary>\u2139\ufe0f About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\".\n\nIf Codex has suggestions, it will comment; otherwise it will react with \ud83d\udc4d.\n\n\n\n\nCodex can also answer questions or update the PR. Try commenting \"@codex address that feedback\".\n            \n</details>"), 'pass');
     assert.equal(classify(body, { user: { login: 'attacker' } }), null);
     assert.equal(classify(body, {}, null), null);
     assert.equal(classify(body, { created_at: requestedAt }), null);
