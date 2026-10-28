@@ -221,6 +221,9 @@ export function classifyCodexSummaryComment(comment, headSha, requestMarker = nu
     if (parsed?.sha && parsed.sha !== headSha) return null;
     return parsed?.result || "pending";
   }
+  const proof = body.match(/^\*\*Reviewed commit:\*\* `([a-f0-9]{10,40})`$/m)?.[1];
+  if (proof && !headSha.startsWith(proof) &&
+      isStrictNativeCodexReceipt(body, proof.padEnd(40, "0"))) return null;
   if (!isStrictNativeCodexReceipt(body, headSha, { allowUnboundLegacy: true })) return "pending";
   // Editing an old static receipt never establishes a new review verdict.
   const created = Date.parse(comment.created_at || "");

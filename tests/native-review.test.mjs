@@ -317,3 +317,14 @@ test('shared thread verification paginates and fails closed on unavailable threa
   assert.equal(result,true);assert.equal(calls,2);
   await assert.rejects(()=>hasUnresolvedReviewThreads({owner:'o',repo:'r',prNumber:8,request:async()=>({errors:[{message:'forbidden'}]})}),/Could not verify/);
 });
+
+
+test('late foreign clean receipts cannot supersede a current-head verdict', () => {
+  const current = comment(receipt);
+  const foreign = comment(receipt.replace('2667f79cd7', old.slice(0, 10)), { created_at: '2026-10-15T21:50:00Z' });
+  assert.equal(classifyCodexSummaryComment(foreign, head, marker), null);
+  assert.equal(latestCodexSummaryResult([current, foreign], head, marker), 'pass');
+  const malformed = { ...foreign, body: foreign.body + '\nAuthentication leaks credentials.' };
+  assert.notEqual(classifyCodexSummaryComment(malformed, head, marker), null);
+  assert.notEqual(latestCodexSummaryResult([current, malformed], head, marker), 'pass');
+});
