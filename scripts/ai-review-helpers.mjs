@@ -1,3 +1,4 @@
+import { isStrictNativeCodexReceipt } from "./codex-native-receipt.mjs";
 export const trustedAssociations = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
 
 export function isTrustedAssociation(value) {
@@ -220,18 +221,13 @@ export function classifyCodexSummaryComment(comment, headSha, requestMarker = nu
     if (parsed?.sha && parsed.sha !== headSha) return null;
     return parsed?.result || "pending";
   }
-  if (body.startsWith("<!-- codex-review-receipt:")) {
-    if (!body.startsWith("<!-- codex-review-receipt:v1 -->")) return "pending";
-    body = body.slice("<!-- codex-review-receipt:v1 -->".length).trim();
-  }
-  if (/codex-(?:review-(?:receipt|state):|pull-request-review-summary)/i.test(body)) return "pending";
-  body = withoutCodexAboutDetails(body);
-  const match = body.match(/^Codex Review: Did(?:\s+not|\s*n['’]?t) find any major issues\.([^\n]*)(?:\n+\*\*Reviewed commit:\*\* `([a-f0-9]{10,40})`)?$/i);
-  if (!match || /\b(?:P[0-3]|findings?|issues?|pending|failed|blocked|not|unresolved|commit|sha|reviewed)\b/i.test(match[1]) || match[1].includes("`")) return "pending";
-  if (match[2] && !headSha.startsWith(match[2])) return null;
-  // Receipt format always names the reviewed commit. Legacy format retains
-  // timestamp + timeline binding when no commit was included by the backend.
-  if (!match[2] && String(comment.body).trim().startsWith("<!--")) return "pending";
+  const proof = body.match(/^\*\*Reviewed commit:\*\* `([a-f0-9]{10,40})`$/m)?.[1];
+  if (proof && !headSha.startsWith(proof) &&
+      isStrictNativeCodexReceipt(body, proof.padEnd(40, "0"))) return null;
+  if (!isStrictNativeCodexReceipt(body, headSha, { allowUnboundLegacy: true })) return "pending";
+  // Editing an old static receipt never establishes a new review verdict.
+  const created = Date.parse(comment.created_at || "");
+  if (!Number.isFinite(created) || created <= requestedAt) return "pending";
   return "pass";
 }
 

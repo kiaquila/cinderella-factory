@@ -26,7 +26,7 @@ const classify = (body, extra, request = marker) => classifyCodexSummaryComment(
 test('observed receipt and legacy no-findings formats retain current-head request binding', () => {
   for (const body of [receipt, legacy, "Codex Review: Didn't find any major issues."]) {
     assert.equal(classify(body), 'pass');
-    assert.equal(classify(body + '\n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\nComment "@codex review".\n</details>'), 'pass');
+    assert.equal(classify(body + "\n\n<details> <summary>\u2139\ufe0f About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\".\n\nIf Codex has suggestions, it will comment; otherwise it will react with \ud83d\udc4d.\n\n\n\n\nCodex can also answer questions or update the PR. Try commenting \"@codex address that feedback\".\n            \n</details>"), 'pass');
     assert.equal(classify(body, { user: { login: 'attacker' } }), null);
     assert.equal(classify(body, {}, null), null);
     assert.equal(classify(body, { created_at: requestedAt }), null);
@@ -316,4 +316,15 @@ test('shared thread verification paginates and fails closed on unavailable threa
   }});
   assert.equal(result,true);assert.equal(calls,2);
   await assert.rejects(()=>hasUnresolvedReviewThreads({owner:'o',repo:'r',prNumber:8,request:async()=>({errors:[{message:'forbidden'}]})}),/Could not verify/);
+});
+
+
+test('late foreign clean receipts cannot supersede a current-head verdict', () => {
+  const current = comment(receipt);
+  const foreign = comment(receipt.replace('2667f79cd7', old.slice(0, 10)), { created_at: '2026-10-15T21:50:00Z' });
+  assert.equal(classifyCodexSummaryComment(foreign, head, marker), null);
+  assert.equal(latestCodexSummaryResult([current, foreign], head, marker), 'pass');
+  const malformed = { ...foreign, body: foreign.body + '\nAuthentication leaks credentials.' };
+  assert.notEqual(classifyCodexSummaryComment(malformed, head, marker), null);
+  assert.notEqual(latestCodexSummaryResult([current, malformed], head, marker), 'pass');
 });
